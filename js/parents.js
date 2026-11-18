@@ -1,7 +1,7 @@
 /* =========================================================
-   Sammie Schaakt! - voor ouders
+   Sammie Schaakt! - instellingen (ouders en kinderen)
    Instellingen, overzicht, familie aanpassen, spelers beheren.
-   (Alleen te bereiken na de rekensom.)
+   (Via het tandwieltje op het startscherm.)
    ========================================================= */
 
 /* ---------- Instellingen (hub) ---------- */
@@ -10,7 +10,7 @@ function Settings() {
   const me = Store.profile();
   app.innerHTML = `
   <div class="screen settings">
-    <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Voor ouders</div><div class="spacer"></div></div>
+    <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Instellingen</div><div class="spacer"></div></div>
     <div class="settings-body">
       <section class="card player-head">
         <div class="ph-avatar">${Avatars.html(me, 'happy')}</div>

@@ -48,7 +48,7 @@ Te makkelijk geworden? Dan kan alles strenger worden afgesteld in `js/ai.js` (bi
 Tijdens het spelen: 💡 Tip, ↩️ Terug (zet terugnemen), 🔄 Opnieuw, en de **pas-op-hulp**
 die waarschuwt als Sam zomaar een stuk weggeeft ("Weet je het zeker?").
 
-**Puzzels:** rondjes van 5 puzzels (45 in totaal), meteen te spelen.
+**Puzzels:** rondjes van 5 makkelijke puzzels: schaak geven, schaakmat in één zet, een los stuk pakken of een stuk in veiligheid brengen. Geen moeilijke termen.
 
 **Prijzenkast:** 25 prijzen: eerste les, elke wereld, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
 een sticker per verslagen familielid en "Kampioen van de familie".
@@ -72,9 +72,9 @@ Alles is meteen te kiezen; er hoeft niks verdiend te worden.
 Kies een familielid, een ander kind of "Gast".
 
 **Spelers:** meerdere kinderen kunnen spelen, ieder met een eigen poppetje, voortgang en prijzen.
-Wisselen: tik op het poppetje op het startscherm. Nieuwe speler toevoegen kan alleen een volwassene.
+Wisselen: tik op het poppetje op het startscherm. Een nieuwe speler toevoegen kan via "Wie speelt er?" of ⚙️ > Spelers.
 
-**Voor ouders** (⚙️ rechtsboven, met rekensom-slot):
+**Instellingen** (⚙️ rechtsboven):
 - 📊 *Overzicht*: wat gaat goed en wat is lastig (per vaardigheid "in één keer goed"), lastigste lessen,
   hoe vaak de pas-op-hulp waarschuwde, de laatste potjes en tips om samen te oefenen.
 - 👪 *Tegenstanders*: poppetje, naam en niveau aanpassen, of zelf een nieuwe tegenstander maken.

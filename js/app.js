@@ -251,23 +251,6 @@ function ask(question, onYes, yes = 'Ja', no = 'Nee') {
   $('#mNo', m).onclick = closeModal;
 }
 
-/* Kleine rekensom zodat alleen grote mensen bij de instellingen komen */
-function parentGate(onOk) {
-  const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4);
-  const m = modal(`<h2>Voor papa, mama of oom/tante</h2>
-    <p>Hoeveel is ${a} × ${b}?</p>
-    <input id="gate" class="text-input" inputmode="numeric" autocomplete="off">
-    <div class="modal-buttons"><button class="btn green" id="gOk">OK</button><button class="btn grey" id="gNo">Terug</button></div>`);
-  const input = $('#gate', m);
-  input.focus();
-  const check = () => {
-    if (parseInt(input.value, 10) === a * b) { closeModal(); onOk(); } else { input.value = ''; input.classList.add('wrong'); Sound.play('oops'); }
-  };
-  $('#gOk', m).onclick = check;
-  input.onkeydown = (e) => { if (e.key === 'Enter') check(); };
-  $('#gNo', m).onclick = closeModal;
-}
-
 /* =========================================================
    PRIJZEN (bekers en stickers)
    ========================================================= */
@@ -377,7 +360,7 @@ function Home() {
   $('#toDiplomas').onclick = () => { Sound.play('tap'); go(Diplomas); };
   $('#theme').onclick = () => { Sound.play('tap'); go(ThemePicker); };
   $('#who').onclick = () => { Sound.play('tap'); go(WhoPlays); };
-  $('#parent').onclick = () => parentGate(() => go(Settings));
+  $('#parent').onclick = () => { Sound.play('tap'); go(Settings); };
 }
 
 /* =========================================================
@@ -398,7 +381,7 @@ function WhoPlays() {
       <button class="opp-card soon add-profile" id="addP">
         <div class="opp-avatar mystery">+</div>
         <div class="opp-name">Nieuwe speler</div>
-        <div class="opp-intro">Even vragen aan papa of mama</div>
+        <div class="opp-intro">Maak je eigen poppetje</div>
       </button>
     </div>
   </div>`;
@@ -411,7 +394,7 @@ function WhoPlays() {
       go(Home);
     };
   });
-  $('#addP').onclick = () => parentGate(() => newProfile(() => go(WhoPlays)));
+  $('#addP').onclick = () => newProfile(() => go(WhoPlays));
 }
 
 function newProfile(done) {
@@ -521,6 +504,10 @@ function findSolution(step) {
   return qMoves(Chess.legalMoves(s)).find((m) => g.ok(Chess.makeMove(s, m), m, step));
 }
 
+/* Bij 'sterren pakken' en 'alles slaan': staat er naast pionnen ook een ander wit stuk,
+   dan zijn die pionnen obstakels en blijven ze staan. */
+const isObstacle = (board, sq) => board[sq] === 'wP' && board.some((p) => p && p[0] === 'w' && p[1] !== 'P');
+
 /* Eerste zet van de kortste oplossing bij 'sterren pakken' of 'alles slaan' */
 function freeSolution(type, state, stars) {
   const done = (s, left) => (type === 'stars' ? left.length === 0 : !s.board.some((p) => p && p[0] === 'b'));
@@ -531,6 +518,7 @@ function freeSolution(type, state, stars) {
     if (done(s, left)) return first;
     if (d >= 10) continue;
     for (const m of qMoves(Chess.legalMoves(s))) {
+      if (isObstacle(s.board, m.from)) continue;
       const n = Chess.makeMove(s, m);
       n.turn = 'w'; n.ep = null;
       const l2 = left.filter((x) => x !== m.to);
@@ -600,6 +588,13 @@ function Exercise(step, ui) {
     const mv = dests.find((m) => m.to === i);
     if (selected !== null && mv) return doMove(mv);
     const p = state.board[i];
+    if (p && p[0] === 'w' && freeMode && isObstacle(state.board, i)) {
+      view.shake(i);
+      Sound.play('oops');
+      ui.setText('Deze pion blijft staan. Hij staat alleen in de weg!', 'oops');
+      selected = null; dests = [];
+      return draw();
+    }
     if (p && p[0] === 'w') {
       const ms = qMoves(Chess.legalMoves(state, i));
       if (!ms.length) {
@@ -809,24 +804,29 @@ function LessonPlayer(li) {
 /* =========================================================
    PUZZELS
    ========================================================= */
+/* Puzzels zijn bewust makkelijk: alleen deze soorten, met simpele woorden. */
 const PUZZLE_TEXT = {
-  check: 'Zet de koning schaak!', mate: 'Geef schaakmat!', hanging: 'Pak het losse stuk!',
-  safe: 'Zorg dat al je stukken veilig staan!', fork: 'Maak een vork!', enpassant: 'Sla en passant!',
+  check: 'Val de zwarte koning aan! Dat heet schaak.',
+  mate: 'Geef schaakmat! Dan kan de zwarte koning nergens meer heen.',
+  hanging: 'Pak een stuk van zwart dat niemand beschermt!',
+  safe: 'Een stuk van jou wordt aangevallen. Zet het op een veilig vakje!',
 };
+const PUZZLE_GOALS = Object.keys(PUZZLE_TEXT);
+const PUZZLE_LESSONS = ['schaak', 'mat', 'los', 'redden']; // uit deze lessen komen extra puzzels
 
 function puzzlePool() {
   const fromLessons = [];
   for (const l of LESSONS) {
+    if (!PUZZLE_LESSONS.includes(l.id)) continue;
     for (const st of l.steps) {
-      if (st.type === 'goal' && PUZZLE_UNLOCK[st.goal]) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
+      if (st.type === 'goal' && PUZZLE_GOALS.includes(st.goal)) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
     }
   }
-  return PUZZLES.concat(fromLessons);
+  return PUZZLES.filter((p) => PUZZLE_GOALS.includes(p.goal)).concat(fromLessons);
 }
 
 /* Puzzel van de dag: alleen de makkelijkere soorten, zodat het altijd te doen is */
-const DAILY_GOALS = ['check', 'hanging', 'mate', 'safe'];
-const dailyPool = () => puzzlePool().filter((p) => DAILY_GOALS.includes(p.goal));
+const dailyPool = () => puzzlePool();
 
 function Puzzles() {
   const pool = puzzlePool();
