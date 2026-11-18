@@ -197,6 +197,9 @@ let timers = [];
 const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
 
 function go(screen, ...args) {
+  // Staat er een nieuwe versie klaar en gaan we naar het startscherm? Dan nu verversen.
+  if (screen === Home && window.__updateReady) { location.reload(); return; }
+  window.__screen = screen;
   timers.forEach(clearTimeout);
   timers = [];
   if (screenCleanup) screenCleanup();

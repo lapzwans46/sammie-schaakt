@@ -19,5 +19,19 @@ if (navigator.storage && navigator.storage.persist) {
 
 // Offline werken (alleen als de app via een website draait, niet als los bestand)
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch(() => { /* geen probleem: dan alleen online */ });
+  // Stond er al een versie op dit apparaat? Dan is een wissel van versie een update.
+  const hadVersion = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadVersion || window.__updateReady) return;
+    window.__updateReady = true;
+    // Alleen meteen verversen als Sam op het startscherm staat en er geen venster open is.
+    // Anders gebeurt het vanzelf zodra hij teruggaat naar het startscherm.
+    if (window.__screen === Home && !document.querySelector('#modal')) location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    // Kijk ook naar updates als de app vanuit de achtergrond weer wordt geopend
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => { /* geen probleem: dan alleen online */ });
 }
