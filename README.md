@@ -15,35 +15,35 @@ Tip: druk op **F11** voor volledig scherm.
 
 ## Wat zit erin
 
-**20 lessen in 3 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
+**19 lessen in 3 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
 
 | Wereld | Lessen |
 |---|---|
 | 1. De stukken | het bord, toren, loper, koningin, koning, paard, pion |
-| 2. De regels | slaan, wat is een stuk waard, schaak, schaakmat, rokeren, en passant, klaar voor een potje |
+| 2. De regels | slaan, wat is een stuk waard, schaak, schaakmat, rokeren, klaar voor een potje |
 | 3. Slim spelen | losse stukken, red je stuk, de vork, mat-trucjes, een goed begin (met het herdersmatje), schaakmeester-toets |
 
 Opdrachtsoorten: sterren pakken, stukken slaan, quizjes en echte stellingen (schaak geven, mat geven,
-rokeren, en passant, los stuk pakken, stuk redden, vork maken). Vastgelopen? Met de knop 💡 Hint wijst Pim de goede zet aan.
+rokeren, los stuk pakken, stuk redden, vork maken). Alle teksten zijn kort en simpel: Sam kan net een beetje lezen. Vastgelopen? Met de knop 💡 Hint wijst Pim de goede zet aan.
 
 **Spelen: de familieladder.** Alles is meteen open: Sam mag tegen iedereen spelen.
 Een groen "Probeer mij!"-label wijst de eerstvolgende tegenstander aan die hij nog niet verslagen heeft.
 
-| # | Wie | Niveau | Hoe speelt die? |
-|---|---|---|---|
-| 1 | Opa | 1 | zet bijna altijd zomaar wat |
-| 2 | Oma | 2 | zet vaak zomaar wat |
-| 3 | Pietje | 3 | pakt heel soms iets |
-| 4 | Cato | 4 | pakt soms een los stuk |
-| 5 | Lout | 5 | pakt vaker een los stuk |
-| 6 | Sophie | 6 | let een beetje op |
-| 7 | Rick | 7 | let wat beter op |
-| 8 | Simone | 8 | let goed op |
-| 9 | Paul | 9 | let heel goed op |
-| 10 | Mama | 10 | maakt weinig foutjes |
-| 11 | Papa | 11 | de sterkste, maar te verslaan |
+| # | Wie | Niveau | Sterren | Hoe speelt die? |
+|---|---|---|---|---|
+| 1 | Opa | 1 | ½ | speelt bijna altijd zomaar wat |
+| 2 | Oma | 2 | 1 | speelt heel vaak zomaar wat |
+| 3 | Pietje | 3 | 1½ | speelt vaak zomaar wat |
+| 4 | Cato | 4 | 2 | pakt soms een stuk |
+| 5 | Lout | 5 | 2½ | pakt vaker een stuk |
+| 6 | Sophie | 6 | 2½ | let een beetje op |
+| 7 | Rick | 7 | 3 | ziet soms schaakmat |
+| 8 | Simone | 8 | 3½ | let goed op |
+| 9 | Paul | 9 | 4 | let heel goed op |
+| 10 | Mama | 10 | 4½ | maakt weinig foutjes |
+| 11 | Papa | 11 | 5 | de sterkste |
 
-De ladder is bewust mild: een beginner wint vaak van de onderste helft en af en toe van Papa.
+De ladder is bewust heel mild: het sterkste niveau (11) is even sterk als het vroegere niveau 6.
 Te makkelijk geworden? Dan kan alles strenger worden afgesteld in `js/ai.js` (bij `LEVELS`).
 Tijdens het spelen: 💡 Tip, ↩️ Terug (zet terugnemen), 🔄 Opnieuw, en de **pas-op-hulp**
 die waarschuwt als Sam zomaar een stuk weggeeft ("Weet je het zeker?").
@@ -60,8 +60,8 @@ een sticker per verslagen familielid en "Kampioen van de familie".
 **Terugkijken met Pim:** na een potje (vanaf 6 zetten) laat Pim één ding zien dat goed ging, en hooguit
 twee momenten om van te leren (een los stuk, een gemiste kans of een gemist schaakmat). Met "Wat was beter?" laat hij de betere zet zien.
 
-**Diploma's:** per afgeronde wereld een diploma, plus een Meesterdiploma als alles af is. Met naam,
-poppetje en datum, om uit te printen (A4 liggend).
+**Diploma's:** per afgeronde wereld een feestelijk diploma (vlaggetjes, lint, medaille), plus een Meesterdiploma als alles af is.
+Met naam, poppetje en datum. Printen gaat precies op één A4 liggend.
 
 **Kleuren:** met 🎨 linksboven kiest Sam zelf de kleuren van het bord (7 stuks) en van de stukken (5 stuks).
 Alles is meteen te kiezen; er hoeft niks verdiend te worden.

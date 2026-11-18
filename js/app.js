@@ -461,15 +461,15 @@ function LessonMap() {
 const GOALS = {
   check: {
     ok: (s) => Chess.inCheck(s, 'b'),
-    wrong: () => 'Bijna! De koning staat nog niet schaak. Probeer nog eens!',
+    wrong: () => 'Bijna! De koning staat nog niet schaak.',
   },
   mate: {
     ok: (s) => Chess.gameStatus(s) === 'checkmate',
-    wrong: (s) => (Chess.inCheck(s, 'b') ? 'Dat is wel schaak, maar de koning kan nog weg. Probeer nog eens!' : 'Dat is nog geen schaakmat. Probeer nog eens!'),
+    wrong: (s) => (Chess.inCheck(s, 'b') ? 'Schaak! Maar de koning kan nog weg.' : 'Nog geen schaakmat. Probeer nog eens!'),
   },
   castle: {
     ok: (s, m) => m.flag === 'castleK' || m.flag === 'castleQ',
-    wrong: () => 'Dat was nog geen rokade. Zet de koning twee stapjes naar de toren!',
+    wrong: () => 'Zet de koning twee stapjes naar de toren!',
   },
   escape: { ok: () => true, wrong: () => 'Probeer nog eens!' },
   enpassant: {
@@ -478,22 +478,22 @@ const GOALS = {
   },
   hanging: {
     ok: (s, m) => !!m.captured && !Chess.isAttacked(s.board, m.to, 'b'),
-    wrong: (s, m) => (m.captured ? 'Oei! Dat stuk was beschermd. Dan slaat zwart jouw stuk terug. Zoek het losse stuk!' : 'Je moet een stuk slaan. Welk stuk is niet beschermd?'),
+    wrong: (s, m) => (m.captured ? 'Oei! Dat stuk wordt beschermd. Zoek een ander!' : 'Je moet een stuk pakken!'),
   },
   safe: {
     ok: (s) => Tactics.loss(s).loss < 100,
-    wrong: () => 'Oei, dan kan zwart nog steeds iets van jou pakken! Probeer nog eens.',
+    wrong: () => 'Oei! Zwart kan nog iets van jou pakken.',
     danger: (s) => Tactics.loss(s).sq,
   },
   fork: {
     ok: (s, m) => Tactics.targets(s, m.to).length >= 2 && Tactics.loss(s).loss < 200,
     wrong: (s, m) => (Tactics.targets(s, m.to).length >= 2
-      ? 'Mooie vork! Maar dan kan zwart jouw stuk pakken. Zoek een veilig vakje!'
-      : 'Dat is nog geen vork. Zoek een vakje waar je twee stukken tegelijk aanvalt!'),
+      ? 'Mooi! Maar zwart kan jouw stuk pakken.'
+      : 'Val twee stukken tegelijk aan!'),
   },
   to: {
     ok: (s, m, step) => m.piece[1] === step.piece && step.squares.includes(Chess.sqName(m.to)),
-    wrong: () => 'Dat is het nog niet helemaal. Probeer nog eens!',
+    wrong: () => 'Bijna! Probeer nog eens.',
   },
 };
 
@@ -574,7 +574,7 @@ function Exercise(step, ui) {
     marks = [];
     draw();
     const name = Pieces.NAMES[sol.piece[1]];
-    ui.setText(`Pim helpt: tik op je ${name} en dan op het gele vakje!`, 'happy');
+    ui.setText(`Tik op je ${name}. Tik dan op het gele vakje!`, 'happy');
   }
 
   const solvedNow = (m) => {
@@ -600,7 +600,7 @@ function Exercise(step, ui) {
       if (!ms.length) {
         view.shake(i);
         Sound.play('oops');
-        if (Chess.inCheck(state, 'w')) ui.setText('Je koning staat schaak! Red eerst je koning.', 'oops');
+        if (Chess.inCheck(state, 'w')) ui.setText('Je koning staat schaak! Red hem eerst.', 'oops');
         selected = null; dests = [];
         return draw();
       }
@@ -613,6 +613,15 @@ function Exercise(step, ui) {
   }
 
   function doMove(m) {
+    if (m.promo && !m.picked) {
+      locked = true;
+      return askPromotion('w', (t) => {
+        locked = false;
+        const real = withPromo(state, m, t);
+        real.picked = true;
+        doMove(real);
+      });
+    }
     const next = Chess.makeMove(state, m);
     if (freeMode) { next.turn = 'w'; next.ep = null; }
     state = next;
@@ -621,7 +630,7 @@ function Exercise(step, ui) {
     Sound.play(m.captured ? 'capture' : 'move');
     if (stars.has(m.to)) { stars.delete(m.to); later(() => { Sound.play('star'); view.pop(m.to); }, 150); }
     draw({ from: m.from, to: m.to });
-    if (m.promo) { later(() => Sound.play('magic'), 250); ui.setText('Toverij! Je pion is een koningin geworden!', 'happy'); }
+    if (m.promo) { later(() => Sound.play('magic'), 250); ui.setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy'); }
 
     if (solvedNow(m)) {
       locked = true;
@@ -642,13 +651,30 @@ function Exercise(step, ui) {
       later(() => { Sound.play('oops'); ui.setText(g.wrong(state, m), 'oops'); }, 400);
       later(() => {
         reset();
-        ui.setText(wrongCount >= 2 ? task + ' Lukt het niet? Druk op 💡 Hint.' : task);
+        ui.setText(wrongCount >= 2 ? task + ' Lukt het niet? Druk op 💡.' : task);
       }, 2600);
     }
   }
 
   reset();
 }
+
+/* Pion aan de overkant: kies waarin hij verandert */
+const PROMO_NAME = { Q: 'koningin', R: 'toren', B: 'loper', N: 'paard' };
+function askPromotion(color, onPick) {
+  Sound.play('magic');
+  const m = modal(`
+    <h2>Je pion is aan de overkant!</h2>
+    <p>Waar verandert hij in?</p>
+    <div class="promo-grid">${['Q', 'R', 'B', 'N'].map((t) => `
+      <button class="promo-btn" data-t="${t}">${Pieces.svg(color + t)}<span>${PROMO_NAME[t]}</span></button>`).join('')}
+    </div>`, 'promo');
+  m.querySelectorAll('.promo-btn').forEach((b) => {
+    b.onclick = () => { closeModal(); onPick(b.dataset.t); };
+  });
+}
+/* Zoek de zet met de gekozen promotie */
+const withPromo = (state, m, t) => Chess.legalMoves(state, m.from).find((x) => x.to === m.to && x.promo === t);
 
 /* =========================================================
    LES SPELEN
@@ -714,8 +740,8 @@ function LessonPlayer(li) {
     const m = modal(`
       <div class="sticker">${Pieces.svg(lesson.icon)}</div>
       <h2>Les klaar!</h2>
-      <p>Je hebt de les <b>${lesson.title}</b> gehaald. Je krijgt een ster! ⭐</p>
-      ${newDiploma ? `<p class="world-unlock">🎓 Wereld ${lesson.world} is helemaal af! Je hebt een diploma verdiend.</p>` : ''}
+      <p>Je krijgt een ster! ⭐</p>
+      ${newDiploma ? `<p class="world-unlock">🎓 Wereld ${lesson.world} is af! Je krijgt een diploma!</p>` : ''}
       <div class="modal-buttons">
         ${newDiploma ? `<button class="btn orange" id="mDiploma">🎓 Bekijk je diploma</button>` : ''}
         ${hasNext ? '<button class="btn green" id="mNext">Volgende les ▶</button>' : '<button class="btn orange" id="mPlay">Ga spelen! ♟️</button>'}
@@ -792,7 +818,7 @@ function LessonPlayer(li) {
           Sound.play('oops');
           wrong++;
           Stats.lessonWrong(lesson.id);
-          setText('Hmm, dat is het niet. Probeer nog eens!', 'oops');
+          setText('Nee, probeer nog eens!', 'oops');
         }
       };
     });
@@ -806,10 +832,10 @@ function LessonPlayer(li) {
    ========================================================= */
 /* Puzzels zijn bewust makkelijk: alleen deze soorten, met simpele woorden. */
 const PUZZLE_TEXT = {
-  check: 'Val de zwarte koning aan! Dat heet schaak.',
-  mate: 'Geef schaakmat! Dan kan de zwarte koning nergens meer heen.',
-  hanging: 'Pak een stuk van zwart dat niemand beschermt!',
-  safe: 'Een stuk van jou wordt aangevallen. Zet het op een veilig vakje!',
+  check: 'Val de zwarte koning aan!',
+  mate: 'Geef schaakmat!',
+  hanging: 'Pak een stuk dat niemand beschermt!',
+  safe: 'Red je stuk! Zet het op een veilig vakje.',
 };
 const PUZZLE_GOALS = Object.keys(PUZZLE_TEXT);
 const PUZZLE_LESSONS = ['schaak', 'mat', 'los', 'redden']; // uit deze lessen komen extra puzzels
@@ -875,7 +901,7 @@ function Puzzles() {
       <div class="trophy">🧩</div>
       <h2>Rondje klaar!</h2>
       <div class="big-stars">${results.map((r) => (r ? '★' : '✓')).join(' ')}</div>
-      <p>${stars === round.length ? 'Alles in één keer goed. Wauw!' : `Je had er ${stars} in één keer goed. Knap!`}</p>
+      <p>${stars === round.length ? 'Alles in één keer goed. Wauw!' : `${stars} in één keer goed. Knap!`}</p>
       <p class="small">Je hebt al ${Store.data.puzzles} puzzels opgelost.</p>
       <div class="modal-buttons">
         <button class="btn green" id="mAgain">Nog een rondje</button>
@@ -905,7 +931,7 @@ function DailyPuzzle() {
   const setText = makeSetText();
   const already = dailyToday();
   const p = dailyPick(pool);
-  const taskText = (already ? 'Deze heb je vandaag al gedaan, maar je mag hem nog een keer proberen! ' : 'De puzzel van vandaag: ') + p.text;
+  const taskText = (already ? 'Al gedaan! Nog een keer? ' : '') + p.text;
   setText(taskText);
   Exercise({ type: 'goal', ...p }, {
     stage: $('#stage'), actions: $('#actions'), setText, taskText,
@@ -976,7 +1002,14 @@ function Prizes() {
    ========================================================= */
 /* Iedereen is meteen te kiezen. De eerste die nog niet verslagen is, krijgt een 'Nu!'-label. */
 const nextOpp = () => FAMILY.opponents.findIndex((o) => !Store.data.wins[o.id]);
-const oppStars = (o) => Math.min(5, Math.ceil((o.level * 5) / 11));
+/* Sterren met halve sterren: niveau 1 = ½ ster, niveau 11 = 5 sterren */
+const levelStars = (level) => Math.min(5, Math.max(0.5, Math.round((level * 10) / 11) / 2));
+const oppStars = (o) => levelStars(o.level);
+function starsHtml(n) {
+  const full = Math.floor(n), half = n - full >= 0.5;
+  return '<span class="st full">★</span>'.repeat(full) + (half ? '<span class="st half">★</span>' : '')
+    + '<span class="st empty">★</span>'.repeat(5 - full - (half ? 1 : 0));
+}
 
 function ChooseOpponent() {
   const cards = FAMILY.opponents.map((o, i) => {
@@ -988,7 +1021,7 @@ function ChooseOpponent() {
       <div class="opp-step">${i + 1}</div>
       <div class="opp-avatar">${Avatars.html(o, 'happy')}</div>
       <div class="opp-name">${o.name}</div>
-      <div class="opp-stars">${'★'.repeat(s)}<span>${'★'.repeat(5 - s)}</span></div>
+      <div class="opp-stars" aria-label="${s} sterren">${starsHtml(s)}</div>
       <div class="opp-intro">${o.intro}</div>
       <div class="opp-wins">🏆 ${Store.data.wins[o.id] || 0}</div>
     </button>`;
@@ -1156,8 +1189,8 @@ function Game(oi, human = null) {
       if (!ms.length) {
         view.shake(i);
         Sound.play('oops');
-        if (Chess.inCheck(G.state, side)) banner('Je koning staat schaak! Red eerst je koning 👑', 'warn');
-        else banner(`Je ${Pieces.NAMES[p[1]]} kan nu niet bewegen`, '');
+        if (Chess.inCheck(G.state, side)) banner('Schaak! Red je koning! 👑', 'warn');
+        else banner('Dit stuk kan nu niet.', '');
         G.sel = null; G.dests = [];
         return draw();
       }
@@ -1166,7 +1199,7 @@ function Game(oi, human = null) {
       return draw();
     }
     if (p && p[0] !== side && G.sel === null) {
-      banner(together ? `Nu is ${side === 'w' ? playerName() : opp.name} aan de beurt!` : `Dat is een stuk van ${opp.name}. Jij speelt met wit!`);
+      banner(together ? `Nu is ${side === 'w' ? playerName() : opp.name} aan de beurt!` : 'Jij bent wit!');
     }
     G.sel = null; G.dests = [];
     draw();
@@ -1174,6 +1207,14 @@ function Game(oi, human = null) {
 
   /* Pas-op-hulp: waarschuw als Sam zomaar een stuk weggeeft */
   function tryMove(m) {
+    if (m.promo && !m.picked) {
+      const st = G.state;
+      return askPromotion(st.turn, (t) => {
+        const real = withPromo(st, m, t);
+        real.picked = true;
+        tryMove(real);
+      });
+    }
     if (Store.data.settings.warn && G.state.turn === me) {
       const next = Chess.makeMove(G.state, m);
       if (Chess.gameStatus(next) !== 'checkmate') {
@@ -1201,10 +1242,10 @@ function Game(oi, human = null) {
     const m2 = modal(`
       <div class="modal-avatar">${Pieces.svg(danger.piece)}</div>
       <h2>Pas op!</h2>
-      <p>${sameSq ? `Als je je ${name} daar neerzet, kan ${together ? 'zwart' : opp.name} hem pakken.` : `Dan kan ${together ? 'zwart' : opp.name} je ${name} pakken.`}</p>
+      <p>Dan kan ${together ? 'zwart' : opp.name} je ${name} pakken!</p>
       <p class="small">Weet je het zeker?</p>
       <div class="modal-buttons">
-        <button class="btn green" id="wOther">Andere zet kiezen</button>
+        <button class="btn green" id="wOther">Andere zet</button>
         <button class="btn grey" id="wDo">Toch doen</button>
       </div>`);
     $('#wOther', m2).onclick = () => { closeModal(); G.sel = null; G.dests = []; G.marks = []; draw(); };
@@ -1229,8 +1270,8 @@ function Game(oi, human = null) {
     apply(m);
     if (together && mover === 'b') return blackHumanMove(m);
     if (m.captured) G.capMe.push(m.captured);
-    if (m.promo) { banner('Toverij! Je pion is een koningin! 👑', 'good'); later(() => Sound.play('magic'), 200); }
-    if (m.flag === 'castleK' || m.flag === 'castleQ') banner('Goed zo, je hebt gerokeerd! 🏰', 'good');
+    if (m.promo) { banner(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'good'); later(() => Sound.play('magic'), 200); }
+    if (m.flag === 'castleK' || m.flag === 'castleQ') banner('Goed zo! Gerokeerd! 🏰', 'good');
 
     const st = Chess.gameStatus(G.state, G.keys);
     if (st) { draw({ from: m.from, to: m.to }); return end(st); }
@@ -1264,7 +1305,7 @@ function Game(oi, human = null) {
   /* Samen spelen: zwart (een mens) heeft gezet */
   function blackHumanMove(m) {
     if (m.captured) G.capOpp.push(m.captured);
-    if (m.promo) banner(`Toverij! De pion van ${opp.name} is een koningin! 👑`, 'good');
+    if (m.promo) banner(`Toverij! De pion van ${opp.name} is nu een ${PROMO_NAME[m.promo]}!`, 'good');
     draw({ from: m.from, to: m.to });
     const st = Chess.gameStatus(G.state, G.keys);
     if (st) return end(st);
@@ -1290,7 +1331,7 @@ function Game(oi, human = null) {
     if (st) return end(st);
     if (Chess.inCheck(G.state, me)) {
       later(() => Sound.play('check'), 250);
-      banner('Schaak! Pas op, red je koning! 👑', 'warn');
+      banner('Schaak! Red je koning! 👑', 'warn');
       oppSay(opp.say.gaveCheck, 'wink');
     } else if (m.captured) {
       oppSay(opp.say.tookPiece, 'laugh');
@@ -1309,7 +1350,7 @@ function Game(oi, human = null) {
     closeModal();
     oppMood('happy');
     draw();
-    banner('Zet teruggenomen. Probeer het nog eens!');
+    banner('Zet terug. Probeer nog eens!');
   }
 
   function showHint() {
@@ -1325,15 +1366,15 @@ function Game(oi, human = null) {
       G.dests = qMoves(Chess.legalMoves(G.state, h.from));
       draw();
       const name = Pieces.NAMES[h.piece[1]];
-      banner('💡 ' + (h.captured ? `Tip van Pim: sla met je ${name}!` : `Tip van Pim: zet je ${name} naar het gele vakje.`), 'good');
+      banner('💡 ' + (h.captured ? `Tip: sla met je ${name}!` : `Tip: zet je ${name} op het gele vakje.`), 'good');
     }, 120);
   }
 
   const DRAW_TEXT = {
-    stalemate: 'Pat! De koning staat niet schaak, maar kan geen zet meer doen. Dan is het gelijkspel.',
-    material: 'Er zijn te weinig stukken over om nog schaakmat te geven. Gelijkspel!',
-    fifty: 'Er is heel lang niks geslagen. Dan is het gelijkspel.',
-    repetition: 'Dezelfde stand kwam drie keer terug. Gelijkspel!',
+    stalemate: 'Pat! Zwart kan geen zet meer doen. Gelijkspel.',
+    material: 'Te weinig stukken over. Gelijkspel!',
+    fifty: 'Heel lang niks geslagen. Gelijkspel!',
+    repetition: 'Steeds dezelfde zetten. Gelijkspel!',
   };
 
   function end(st) {
@@ -1359,7 +1400,7 @@ function Game(oi, human = null) {
         $('#meFace').innerHTML = Avatars.html(player, whiteWon ? 'laugh' : 'happy');
         html = `<div class="trophy">🏆</div><h2>Schaakmat! ${winner.name} wint!</h2>
           <div class="duo-avatars"><div>${Avatars.html(winner, 'laugh')}</div><div>${Avatars.html(loser, 'happy')}</div></div>
-          <p>Goed gespeeld, allebei! Geef elkaar een high five ✋</p>`;
+          <p>Goed gespeeld! Geef een high five ✋</p>`;
       } else {
         html = `<div class="trophy">🤝</div><h2>Gelijkspel!</h2><p>${DRAW_TEXT[st]}</p>`;
       }
@@ -1373,15 +1414,15 @@ function Game(oi, human = null) {
         html = `<div class="trophy">🏆</div><h2>Schaakmat! Jij wint!</h2>
           <div class="modal-avatar">${Avatars.html(opp, 'laugh')}</div>
           <p class="quote">"${$('#oppSay').textContent}"</p>
-          <p>Je hebt nu ${d.wins[opp.id]} keer gewonnen van ${opp.name}!</p>
-          ${firstWin && nextOpp ? `<p class="world-unlock">Zin in een nieuwe uitdaging? Probeer ${nextOpp.name} eens!</p>` : ''}`;
+          <p>Al ${d.wins[opp.id]} keer gewonnen van ${opp.name}!</p>
+          ${firstWin && nextOpp ? `<p class="world-unlock">Probeer nu ${nextOpp.name} eens!</p>` : ''}`;
       } else if (blackWon) {
         oppSay(opp.say.win, 'laugh');
         later(() => Sound.play('lose'), 300);
         html = `<h2>Schaakmat... ${opp.name} wint</h2>
           <div class="modal-avatar">${Avatars.html(opp, 'wink')}</div>
           <p class="quote">"${$('#oppSay').textContent}"</p>
-          <p>Niet erg! Van elk potje leer je iets. Wil je je zet terugnemen?</p>`;
+          <p>Niet erg! Volgende keer beter.</p>`;
       } else {
         oppSay(opp.say.draw, 'happy');
         html = `<div class="trophy">🤝</div><h2>Gelijkspel!</h2><p>${DRAW_TEXT[st]}</p>`;

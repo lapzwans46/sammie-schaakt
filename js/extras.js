@@ -193,7 +193,7 @@ function PawnRace(levelKey) {
   function reset() {
     state = Chess.fromFEN(RACE_FEN);
     sel = null; dests = []; last = null; busy = false; over = false; hint = null;
-    setText('Pionnenrace! Wie het eerst een pion aan de overkant heeft, wint. Pionnen slaan schuin, net als altijd. Jij bent wit en jij begint!');
+    setText('Pionnenrace! Wie is het eerst aan de overkant? Jij begint!');
     draw();
   }
 
@@ -208,7 +208,7 @@ function PawnRace(levelKey) {
     sel = m.from;
     dests = qMoves(Chess.legalMoves(state, m.from));
     draw();
-    setText('Pim helpt: probeer deze pion eens!', 'happy');
+    setText('Probeer deze pion!', 'happy');
   };
 
   function tap(i) {
@@ -256,9 +256,9 @@ function PawnRace(levelKey) {
     sel = null; dests = []; hint = null;
     Sound.play(m.captured ? 'capture' : 'move');
     draw({ from: m.from, to: m.to });
-    if (raceWinner(state) === 'w') return finish(true, 'Jouw pion is als eerste aan de overkant. Knap gedaan!');
-    if (!qMoves(Chess.legalMoves(state)).length) return finish(true, 'Pim kan geen zet meer doen. Dan win jij!');
-    setText(m.captured ? 'Hap! Jij pakte een pion van mij. Even denken...' : 'Hmm, even denken...', m.captured ? 'oops' : '');
+    if (raceWinner(state) === 'w') return finish(true, 'Jouw pion was het eerst aan de overkant!');
+    if (!qMoves(Chess.legalMoves(state)).length) return finish(true, 'Pim kan niet meer zetten. Jij wint!');
+    setText(m.captured ? 'Hap! Jij pakte mijn pion.' : 'Hmm, even denken...', m.captured ? 'oops' : '');
     busy = true;
     later(() => {
       const pm = racePick(state, levelKey);
@@ -267,8 +267,8 @@ function PawnRace(levelKey) {
       busy = false;
       Sound.play(pm.captured ? 'capture' : 'move');
       draw({ from: pm.from, to: pm.to });
-      if (raceWinner(state) === 'b') return finish(false, 'Mijn pion was als eerste aan de overkant. Nog een keer?');
-      if (!qMoves(Chess.legalMoves(state)).length) return finish(false, 'Jouw pionnen staan allemaal vast. Dan wint Pim. Nog een keer?');
+      if (raceWinner(state) === 'b') return finish(false, 'Mijn pion was het eerst. Nog een keer?');
+      if (!qMoves(Chess.legalMoves(state)).length) return finish(false, 'Jouw pionnen staan vast. Pim wint.');
       setText(pm.captured ? 'Hap! Die pion is van mij. Jouw beurt!' : 'Jouw beurt!');
     }, 800);
   }
@@ -278,12 +278,12 @@ function PawnRace(levelKey) {
 
 /* ---------- Bord opzetten ---------- */
 const SETUP_TIPS = {
-  P: 'De pionnen staan op een rij, vóór de andere stukken.',
-  R: 'De torens staan in de hoeken, als een kasteelmuur.',
-  N: 'De paarden staan naast de torens.',
-  B: 'De lopers staan naast de paarden.',
-  Q: 'De koningin staat op haar eigen kleur: de witte op een licht vakje, de zwarte op een donker vakje.',
-  K: 'De koning staat naast de koningin, in het midden.',
+  P: 'Pionnen staan op een rij, vooraan.',
+  R: 'Torens staan in de hoeken.',
+  N: 'Paarden staan naast de torens.',
+  B: 'Lopers staan naast de paarden.',
+  Q: 'De koningin staat op haar eigen kleur.',
+  K: 'De koning staat naast de koningin.',
 };
 
 function BoardSetup() {
@@ -313,7 +313,7 @@ function BoardSetup() {
     hint = { from: sq, to: sq };
     Sound.play('magic');
     draw();
-    setText(`Pim helpt: ${SETUP_TIPS[type]} Kijk naar het gele vakje!`, 'happy');
+    setText(`${SETUP_TIPS[type]} Kijk naar het gele vakje!`, 'happy');
   };
 
   function start() {
@@ -321,7 +321,7 @@ function BoardSetup() {
     board = new Array(64).fill(null);
     mistakes = 0;
     fillTray();
-    setText('Zet alle witte stukken op de goede plek! Tik eerst onderaan op een stuk, en dan op het vakje waar het hoort.');
+    setText('Zet de witte stukken op hun plek! Tik op een stuk. Tik dan op het vakje.');
   }
 
   function fillTray() {
@@ -363,7 +363,7 @@ function BoardSetup() {
       Sound.play('oops');
       view.render(board, { marks: [i] });
       later(() => draw(), 600);
-      setText(board[i] ? 'Daar staat al een stuk. Probeer een ander vakje!' : `Bijna! ${SETUP_TIPS[type]}`, 'oops');
+      setText(board[i] ? 'Daar staat al iets!' : `Bijna! ${SETUP_TIPS[type]}`, 'oops');
     }
   }
 
@@ -371,7 +371,7 @@ function BoardSetup() {
     Sound.play('good');
     confetti(60);
     if (color === 'w') {
-      setText('Super! Alle witte stukken staan goed. Nu de zwarte stukken! Die staan aan de andere kant, precies andersom.', 'happy');
+      setText('Super! Nu de zwarte stukken. Die staan bovenaan.', 'happy');
       later(() => { color = 'b'; fillTray(); }, 1800);
     } else {
       Store.data.extra.setups++;
@@ -416,12 +416,12 @@ function analyzeGame(history, oppName) {
     const legal = qMoves(Chess.legalMoves(h.before));
 
     if (Chess.gameStatus(after) === 'checkmate') {
-      moments.push({ kind: 'good', score: 5000, idx, nr, h, text: 'Schaakmat! Wat een mooie zet om mee te winnen.' });
+      moments.push({ kind: 'good', score: 5000, idx, nr, h, text: 'Schaakmat! Mooie zet!' });
       return;
     }
     const mate = legal.find((x) => Chess.gameStatus(Chess.makeMove(h.before, x)) === 'checkmate');
     if (mate) {
-      moments.push({ kind: 'missed', score: 3000, idx, nr, h, better: mate, text: 'Hier kon je in één zet schaakmat geven! Zie jij welke zet?', show: `Met je ${name(mate.piece)} naar het gele vakje was het schaakmat geweest!` });
+      moments.push({ kind: 'missed', score: 3000, idx, nr, h, better: mate, text: 'Hier kon je schaakmat geven! Zie jij hoe?', show: `Zet je ${name(mate.piece)} op het gele vakje!` });
       return;
     }
     const lossAfter = Tactics.loss(after);
@@ -431,8 +431,8 @@ function analyzeGame(history, oppName) {
       const better = AI.hint(h.before);
       moments.push({
         kind: 'oops', score: net, idx, nr, h, after, danger: lossAfter.sq, better,
-        text: `Oei, na deze zet kon ${oppName} je ${name(lossAfter.piece)} pakken. Zie je hem?`,
-        show: better ? `Een slimmere zet was: je ${name(better.piece)} naar het gele vakje.` : 'Kijk voortaan even of je stukken veilig staan.',
+        text: `Oei! ${oppName} kon je ${name(lossAfter.piece)} pakken.`,
+        show: better ? `Beter was: je ${name(better.piece)} op het gele vakje.` : 'Kijk goed of je stukken veilig staan.',
       });
       return;
     }
@@ -446,7 +446,7 @@ function analyzeGame(history, oppName) {
     if (free && gain < free.v) {
       moments.push({
         kind: 'missed', score: free.v, idx, nr, h, better: free.x,
-        text: `Kijk eens goed... hier stond er iets van ${oppName} los!`,
+        text: `Kijk goed! Hier kon je iets gratis pakken.`,
         show: `Je kon de ${name(free.x.captured)} gratis pakken met je ${name(free.x.piece)}!`,
       });
       return;
@@ -454,9 +454,9 @@ function analyzeGame(history, oppName) {
     if (gain >= 300 && net <= 0) {
       moments.push({ kind: 'good', score: gain, idx, nr, h, text: `Goed gezien! Je pakte de ${name(m.captured)} van ${oppName}.` });
     } else if (!m.captured && Tactics.targets(after, m.to).length >= 2 && lossAfter.loss < 200) {
-      moments.push({ kind: 'good', score: 450, idx, nr, h, marks: Tactics.targets(after, m.to), text: 'Een vork! Je viel twee stukken tegelijk aan. Slim!' });
+      moments.push({ kind: 'good', score: 450, idx, nr, h, marks: Tactics.targets(after, m.to), text: 'Twee stukken tegelijk aangevallen. Slim!' });
     } else if (m.flag === 'castleK' || m.flag === 'castleQ') {
-      moments.push({ kind: 'good', score: 150, idx, nr, h, text: 'Netjes gerokeerd! Zo staat je koning veilig.' });
+      moments.push({ kind: 'good', score: 150, idx, nr, h, text: 'Netjes gerokeerd! Je koning staat veilig.' });
     }
   });
   const good = moments.filter((x) => x.kind === 'good').sort((a, b) => b.score - a.score).slice(0, 1);
@@ -486,8 +486,8 @@ function Review(info) {
       const last = info.history[info.history.length - 1];
       board(Chess.makeMove(last.before, last.m), { lastMove: { from: last.m.from, to: last.m.to } });
       setText(moments.length
-        ? `Ik heb jouw potje tegen ${oppName} bekeken! Ik laat je ${moments.length === 1 ? 'één moment' : `${moments.length} momenten`} zien.`
-        : `Ik heb jouw potje tegen ${oppName} bekeken. Ik zag geen grote foutjes. Netjes gespeeld!`, 'happy');
+        ? 'Ik keek naar jouw potje. Kijk je mee?'
+        : 'Ik keek naar jouw potje. Goed gespeeld!', 'happy');
       actions.innerHTML = moments.length
         ? '<button class="btn green huge" id="next">Laat zien ▶</button>'
         : '<button class="btn green huge" id="done">Klaar</button>';
@@ -520,7 +520,7 @@ function Review(info) {
     if ($('#done')) {
       $('#done').onclick = () => {
         Sound.play('good');
-        const m = modal(`<h2>Goed bekeken!</h2><p>Van elk potje leer je iets. Zin in nog een potje?</p>
+        const m = modal(`<h2>Goed bekeken!</h2><p>Zin in nog een potje?</p>
           <div class="modal-buttons">
             <button class="btn green" id="mAgain">Nog een potje</button>
             <button class="btn grey" id="mBack">Terug</button>
@@ -559,7 +559,7 @@ function Diplomas() {
   app.innerHTML = `
   <div class="screen choose">
     <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Diploma's</div><div class="spacer"></div></div>
-    <p class="choose-sub">Maak een wereld helemaal af en je krijgt een diploma. Die kun je uitprinten!</p>
+    <p class="choose-sub">Maak een wereld af. Dan krijg je een diploma!</p>
     <div class="dip-grid">
       ${list.map((x) => {
         const lessons = x.grand ? LESSONS : LESSONS.filter((l) => l.world === x.key);
@@ -587,6 +587,22 @@ function Diplomas() {
   });
 }
 
+/* Gouden medaille (SVG) */
+function medalSvg(color) {
+  const pts = [];
+  for (let i = 0; i < 32; i++) {
+    const r = i % 2 ? 44 : 50, a = (Math.PI * 2 * i) / 32;
+    pts.push(`${(60 + r * Math.cos(a)).toFixed(1)},${(60 + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return `<svg viewBox="0 0 120 150" class="dip-medal-svg" aria-hidden="true">
+    <path d="M38 96 L24 146 L44 134 L56 148 L62 104 Z" fill="${color}" stroke="#3a2c40" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M82 96 L96 146 L76 134 L64 148 L58 104 Z" fill="${color}" stroke="#3a2c40" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="${pts.join(' ')}" fill="#ffd34d" stroke="#c98a00" stroke-width="3"/>
+    <circle cx="60" cy="60" r="34" fill="#ffe680" stroke="#c98a00" stroke-width="3"/>
+    <path d="M60 36 L67 52 L84 53 L71 64 L75 81 L60 72 L45 81 L49 64 L36 53 L53 52 Z" fill="#fff6c9" stroke="#c98a00" stroke-width="2.5" stroke-linejoin="round"/>
+  </svg>`;
+}
+
 function DiplomaView(key) {
   checkDiplomas();
   const x = diplomaList().find((y) => y.key === key);
@@ -594,8 +610,12 @@ function DiplomaView(key) {
   const nice = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
   const lessons = x.grand ? [] : LESSONS.filter((l) => l.world === key);
   const what = x.grand
-    ? 'alle lessen van <b>Sammie Schaakt!</b> heeft gehaald<br>en nu een echte <b>schaakmeester</b> is!'
-    : `alle lessen van <b>wereld ${key}: ${x.world.title}</b><br>helemaal heeft gehaald!`;
+    ? 'heeft <b>alle lessen</b> van Sammie Schaakt! gehaald.<br>Jij bent nu een echte <b>schaakmeester</b>!'
+    : `heeft <b>wereld ${key}: ${x.world.title}</b> helemaal gehaald!`;
+  const flagColors = ['#ff5d8f', '#ffd34d', '#4cc9f0', '#7bd389', '#9b5de5', '#ff8c42'];
+  const flags = Array.from({ length: 18 }, (_, i) => `<i style="background:${flagColors[i % flagColors.length]}"></i>`).join('');
+  const sparkles = [[4, 30], [95, 28], [24, 40], [76, 40], [31, 88], [67, 88]]
+    .map(([l, t], i) => `<span class="dip-spark" style="left:${l}%;top:${t}%;animation-delay:${i * 0.2}s">★</span>`).join('');
   app.innerHTML = `
   <div class="screen diploma-screen">
     <div class="topbar no-print">
@@ -603,30 +623,34 @@ function DiplomaView(key) {
       <div class="title">Jouw diploma</div>
       <button class="btn yellow" id="print">🖨️ Printen</button>
     </div>
+    <p class="print-tip no-print">Tip voor het printen: kies <b>liggend</b> en <b>A4</b>.</p>
     <div class="diploma" style="--dc:${x.color}">
       <div class="dip-inner">
+        <div class="dip-bunting">${flags}</div>
+        ${sparkles}
         <div class="dip-head">
+          <div class="dip-ribbon"><span>Gefeliciteerd!</span></div>
           <div class="dip-title">${x.grand ? 'Meesterdiploma' : 'Diploma'}</div>
-          <div class="dip-app">Sammie Schaakt!</div>
+          <div class="dip-app">♞ Sammie Schaakt! ♞</div>
         </div>
         <div class="dip-main">
           <div class="dip-av">${Avatars.html(Store.profile(), 'laugh')}</div>
           <div class="dip-text">
-            <p>Pim het Paard verklaart dat</p>
             <div class="dip-name">${playerName()}</div>
             <p>${what}</p>
             ${lessons.length ? `<div class="dip-lessons">${lessons.map((l) => `<span>⭐ ${l.title}</span>`).join('')}</div>` : ''}
           </div>
-          <div class="dip-av pim">${Pieces.svg('wN')}</div>
+          <div class="dip-medal">${medalSvg(x.color)}</div>
         </div>
         <div class="dip-foot">
-          <div>Datum: <b>${nice}</b></div>
-          <div class="dip-pieces">${['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'].map((p) => Pieces.svg(p)).join('')}</div>
-          <div class="dip-sign"><span>Pim</span><small>Pim het Paard, schaakleraar</small></div>
+          <div class="dip-date">📅 ${nice}</div>
+          <div class="dip-pieces">${['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'].map((pc) => Pieces.svg(pc)).join('')}</div>
+          <div class="dip-sign"><div class="dip-pim">${Pieces.svg('wN')}</div><div><span>Pim</span><small>Pim het Paard</small></div></div>
         </div>
       </div>
     </div>
   </div>`;
   $('#back').onclick = () => go(Diplomas);
   $('#print').onclick = () => { try { window.print(); } catch (e) { /* printen niet mogelijk */ } };
+  later(() => { Sound.play('win'); confetti(160); }, 300);
 }

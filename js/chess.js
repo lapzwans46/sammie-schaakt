@@ -19,6 +19,9 @@ const Chess = (() => {
 
   const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+  /* Regels die aan of uit kunnen. En passant staat uit: te ingewikkeld voor nu. */
+  const RULES = { enPassant: false };
+
   function fromFEN(fen) {
     const [placement, turn, castle, ep, half, full] = fen.trim().split(/\s+/);
     const board = new Array(64).fill(null);
@@ -133,7 +136,7 @@ const Chess = (() => {
             if (cc < 0 || cc > 7) continue;
             const to = r1 * 8 + cc;
             if (board[to] && board[to][0] === enemy) pushPawn(to);
-            else if (state.ep === to) add(from, to, { flag: 'ep', captured: enemy + 'P' });
+            else if (RULES.enPassant && state.ep === to) add(from, to, { flag: 'ep', captured: enemy + 'P' });
           }
         }
       } else if (t === 'N' || t === 'K') {
@@ -243,7 +246,7 @@ const Chess = (() => {
   }
 
   return {
-    START_FEN, FILES, sqName, sqIndex, row, col, other,
+    START_FEN, RULES, FILES, sqName, sqIndex, row, col, other,
     fromFEN, fromPieces, positionKey, findKing, isAttacked, inCheck,
     pseudoMoves, legalMoves, makeMove, gameStatus, perft,
   };

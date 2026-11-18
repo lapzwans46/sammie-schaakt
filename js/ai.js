@@ -86,22 +86,21 @@ const AI = (() => {
   }
 
   /* Niveaus 1 (heel makkelijk) t/m 11 (het sterkst).
-     De ladder is bewust mild: Sam is 7 en moet ook van de sterkste kunnen winnen.
-     Te makkelijk? Verlaag 'random' en 'noise' of verhoog 'depth'.
-     random = kans op een gokzet, depth = hoeveel zetten vooruit denken,
-     noise = hoeveel 'slordigheid', quiesce = slagwisselingen goed doorrekenen */
+     Bewust heel mild: Sam is 7. Niveau 11 is even sterk als het oude niveau 6.
+     Te makkelijk? Verlaag 'random' en 'noise' (of zet findMate eerder aan).
+     random = kans op een gokzet, noise = 'slordigheid', findMate = ziet schaakmat in één zet */
   const LEVELS = {
-    1: { name: 'Beginner', random: 0.85, depth: 1, noise: 250, findMate: false },
-    2: { name: 'Heel makkelijk', random: 0.75, depth: 1, noise: 200, findMate: false },
-    3: { name: 'Makkelijk', random: 0.65, depth: 1, noise: 150, findMate: false },
-    4: { name: 'Makkelijk+', random: 0.58, depth: 1, noise: 120, findMate: true },
-    5: { name: 'Gemiddeld', random: 0.52, depth: 1, noise: 100, findMate: true },
-    6: { name: 'Gemiddeld+', random: 0.47, depth: 1, noise: 90, findMate: true },
-    7: { name: 'Lastig', random: 0.42, depth: 1, noise: 80, findMate: true },
-    8: { name: 'Lastig+', random: 0.38, depth: 1, noise: 65, findMate: true },
-    9: { name: 'Moeilijk', random: 0.35, depth: 1, noise: 55, findMate: true },
-    10: { name: 'Heel moeilijk', random: 0.32, depth: 1, noise: 45, findMate: true },
-    11: { name: 'Meester', random: 0.28, depth: 1, noise: 40, findMate: true },
+    1: { name: 'Beginner', random: 0.92, depth: 1, noise: 280, findMate: false },
+    2: { name: 'Heel makkelijk', random: 0.88, depth: 1, noise: 260, findMate: false },
+    3: { name: 'Makkelijk', random: 0.84, depth: 1, noise: 240, findMate: false },
+    4: { name: 'Makkelijk+', random: 0.8, depth: 1, noise: 220, findMate: false },
+    5: { name: 'Gemiddeld', random: 0.75, depth: 1, noise: 200, findMate: false },
+    6: { name: 'Gemiddeld+', random: 0.7, depth: 1, noise: 175, findMate: false },
+    7: { name: 'Lastig', random: 0.65, depth: 1, noise: 150, findMate: true },
+    8: { name: 'Lastig+', random: 0.6, depth: 1, noise: 130, findMate: true },
+    9: { name: 'Moeilijk', random: 0.55, depth: 1, noise: 115, findMate: true },
+    10: { name: 'Heel moeilijk', random: 0.51, depth: 1, noise: 100, findMate: true },
+    11: { name: 'Meester', random: 0.47, depth: 1, noise: 90, findMate: true },
   };
 
   function isMate(next) {

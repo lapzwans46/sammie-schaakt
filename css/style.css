@@ -771,15 +771,6 @@ button.hero-avatar { padding: 0; }
 .dip-sign span { font-family: "Segoe Script", "Comic Sans MS", cursive; font-size: 3.4cqw; color: #2c74c9; transform: rotate(-6deg); line-height: 1; }
 .dip-sign small { border-top: .2cqw solid var(--ink-soft); padding-top: .3cqw; font-size: 1.3cqw; color: var(--ink-soft); }
 
-@media print {
-  @page { size: A4 landscape; margin: 0; }
-  html, body { background: #fff !important; }
-  body * { visibility: hidden; }
-  .diploma, .diploma * { visibility: visible; }
-  .diploma { position: fixed; left: 0; top: 0; width: 297mm; height: 210mm; aspect-ratio: auto; border-radius: 0; box-shadow: none; padding: 6mm; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .confetti, .toast { display: none !important; }
-}
 
 /* =========================================================
    Telefoon (iPhone e.d.): compacter, twee kolommen
@@ -863,3 +854,97 @@ button.hero-avatar { padding: 0; }
 
 .backup-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0; }
 .file-label { display: inline-block; cursor: pointer; }
+
+/* halve sterren */
+.st { display: inline-block; }
+.st.full { color: var(--yellow); }
+.st.empty { color: #e6e1ea; -webkit-text-stroke-color: #cfc8d6; }
+.st.half {
+  background: linear-gradient(90deg, var(--yellow) 50%, #e6e1ea 50%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.opp-stars span { -webkit-text-stroke: inherit; }
+.lv-stars .st { -webkit-text-stroke: 1px #c98a00; }
+
+/* pion veranderen */
+.promo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px; }
+.promo-btn { background: #f6f1fa; border-radius: 18px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-weight: 900; box-shadow: 0 5px 0 #d9cde6; }
+.promo-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #d9cde6; }
+.promo-btn .piece-svg { width: 70px; height: 70px; }
+.promo-btn:first-child { background: #fff6d6; box-shadow: 0 5px 0 #e3b52c; }
+
+/* bord blijft stil staan: vegen op het bord schuift de pagina niet */
+.board { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html, body { overscroll-behavior: none; }
+/* teksten veranderen van lengte: geef ze vaste ruimte, zodat het bord niet verspringt */
+.teacher-bubble { min-height: calc(3 * 1.35em + 28px); display: flex; align-items: center; }
+.captured { flex-wrap: nowrap; overflow: hidden; max-width: 100%; }
+@media (orientation: portrait) {
+  .teacher-bubble { min-height: calc(3 * 1.35em + 24px); }
+  .opp-side { height: 120px; overflow: hidden; }
+  .opp-bubble { max-height: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+}
+@media (max-width: 520px) {
+  .opp-side { height: 92px; }
+  .opp-bubble { font-size: .95rem; padding: 8px 12px; }
+}
+
+/* =========================================================
+   Feestelijk diploma
+   ========================================================= */
+.print-tip { text-align: center; font-weight: 700; color: var(--ink); margin: -4px 0 10px; }
+.diploma {
+  background:
+    radial-gradient(circle, #ff5d8f 0 2px, transparent 3px) 0 0 / 46px 46px,
+    radial-gradient(circle, #4cc9f0 0 2px, transparent 3px) 23px 23px / 46px 46px,
+    #fffdf5;
+}
+.dip-inner {
+  position: relative; overflow: hidden;
+  border: 1.4cqw solid var(--dc); border-radius: 2cqw;
+  box-shadow: inset 0 0 0 .5cqw #fff, inset 0 0 0 .9cqw #ffd34d;
+  background: radial-gradient(ellipse at center, #fffef8 55%, #fff6dc 100%);
+  padding: 1.5cqw 3cqw 2cqw;
+}
+.dip-bunting { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 1cqw; }
+.dip-bunting i { width: 4.2cqw; height: 4.6cqw; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.dip-spark { position: absolute; font-size: 2.6cqw; color: #ffd34d; -webkit-text-stroke: .15cqw #c98a00; animation: twinkle 1.6s ease-in-out infinite; }
+.dip-head { position: relative; margin-top: 3.4cqw; }
+.dip-ribbon { display: flex; justify-content: center; margin-bottom: .6cqw; }
+.dip-ribbon span {
+  position: relative; background: var(--dc); color: #fff; font-weight: 900; font-size: 2.2cqw;
+  padding: .5cqw 4cqw; border-radius: .6cqw; text-shadow: 0 .2cqw 0 rgba(0, 0, 0, .2);
+}
+.dip-ribbon span::before, .dip-ribbon span::after {
+  content: ""; position: absolute; top: .8cqw; width: 2.5cqw; height: 100%;
+  background: color-mix(in srgb, var(--dc) 75%, #000); z-index: -1;
+}
+.dip-ribbon span::before { left: -1.6cqw; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+.dip-ribbon span::after { right: -1.6cqw; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+.dip-title { font-size: 7.5cqw; }
+.dip-app { font-size: 2cqw; letter-spacing: .1cqw; }
+.dip-main { grid-template-columns: 15cqw 1fr 14cqw; }
+.dip-medal { width: 100%; transform: rotate(8deg); }
+.dip-medal-svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 .5cqw 0 rgba(0, 0, 0, .15)); }
+.dip-text p { font-size: 2.2cqw; }
+.dip-name { font-size: 7cqw; color: var(--dc); text-shadow: 0 .35cqw 0 rgba(0, 0, 0, .12); border-bottom: .5cqw dotted #ffd34d; }
+.dip-date { font-weight: 800; }
+.dip-sign { flex-direction: row; gap: 1cqw; align-items: center; }
+.dip-sign > div:last-child { display: flex; flex-direction: column; align-items: center; }
+.dip-pim { width: 5.5cqw; background: #fff; border-radius: 50%; padding: .5cqw; box-shadow: 0 .3cqw 0 rgba(0, 0, 0, .1); }
+
+/* Printen: precies één A4 liggend, alleen het diploma */
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  html, body { width: 297mm; height: 210mm; margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: hidden; }
+  body > *:not(#app) { display: none !important; }
+  #app .diploma-screen { display: block !important; padding: 0 !important; min-height: 0 !important; }
+  #app .diploma-screen > *:not(.diploma) { display: none !important; }
+  .diploma {
+    width: 297mm !important; height: 209mm !important; aspect-ratio: auto !important;
+    margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 6mm !important;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .dip-spark { animation: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

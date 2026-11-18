@@ -19,17 +19,17 @@ const EDIT_OPTIONS = {
 
 /* Korte uitleg per niveau (voor ouders) */
 const LEVEL_TEXT = {
-  1: 'zet bijna altijd zomaar wat',
-  2: 'zet vaak zomaar wat',
-  3: 'pakt heel soms iets',
-  4: 'pakt soms een los stuk',
-  5: 'pakt vaker een los stuk',
+  1: 'speelt bijna altijd zomaar wat',
+  2: 'speelt heel vaak zomaar wat',
+  3: 'speelt vaak zomaar wat',
+  4: 'pakt soms een stuk',
+  5: 'pakt vaker een stuk',
   6: 'let een beetje op',
-  7: 'let wat beter op',
+  7: 'ziet soms schaakmat',
   8: 'let goed op',
   9: 'let heel goed op',
   10: 'maakt weinig foutjes',
-  11: 'de sterkste, maar te verslaan',
+  11: 'de sterkste',
 };
 
 /* Alleen gewone tekens in namen, zodat er niks geks op het scherm komt */
@@ -74,7 +74,7 @@ function AvatarEditor(opts) {
 
   function panel() {
     const L = p.look;
-    const stars = (lv) => '★'.repeat(Math.min(5, Math.ceil((lv * 5) / 11)));
+    const stars = (lv) => starsHtml(levelStars(lv));
     $('#edPanel').innerHTML = `
       ${opts.showLevel ? `
         <h4>Hoe goed speelt ${p.name || 'deze tegenstander'}?</h4>

@@ -16,11 +16,74 @@ class BoardView {
       const holder = document.createElement('div');
       holder.className = 'holder';
       sq.appendChild(holder);
-      sq.addEventListener('pointerdown', (e) => { e.preventDefault(); onTap(i); });
       this.el.appendChild(sq);
       this.squares.push({ sq, holder, piece: undefined, deco: '' });
     }
     container.appendChild(this.el);
+
+    /* Tikken én slepen: tik op een stuk en dan op een vakje,
+       of sleep het stuk met je vinger naar het vakje. */
+    this.onTap = onTap;
+    this.drag = null;
+    this.el.addEventListener('pointerdown', (e) => this.down(e));
+    this.el.addEventListener('pointermove', (e) => this.move(e));
+    this.el.addEventListener('pointerup', (e) => this.up(e));
+    this.el.addEventListener('pointercancel', () => this.cancel());
+    this.el.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  squareAt(x, y) {
+    const r = this.el.getBoundingClientRect();
+    if (x < r.left || y < r.top || x >= r.right || y >= r.bottom) return null;
+    const c = Math.floor(((x - r.left) / r.width) * 8);
+    const row = Math.floor(((y - r.top) / r.height) * 8);
+    return row * 8 + c;
+  }
+
+  down(e) {
+    const sq = e.target.closest && e.target.closest('.sq');
+    if (!sq) return;
+    e.preventDefault();
+    this.cancel();
+    const i = +sq.dataset.i;
+    this.onTap(i);
+    const s = this.squares[i];
+    const piece = s.holder.querySelector('.piece');
+    if (piece && s.sq.classList.contains('selected')) {
+      this.drag = { i, x: e.clientX, y: e.clientY, piece, moved: false };
+      try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
+    }
+  }
+
+  move(e) {
+    const d = this.drag;
+    if (!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) < 10) return;
+    d.moved = true;
+    d.piece.style.transition = 'none';
+    d.piece.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
+    d.piece.style.zIndex = 10;
+  }
+
+  up(e) {
+    const d = this.drag;
+    this.drag = null;
+    if (!d || !d.moved) return;
+    d.piece.style.transform = '';
+    d.piece.style.zIndex = '';
+    const t = this.squareAt(e.clientX, e.clientY);
+    if (t !== null && t !== d.i) {
+      this.dropped = true; // na slepen niet nog eens laten 'vliegen'
+      this.onTap(t);
+      this.dropped = false;
+    }
+  }
+
+  cancel() {
+    const d = this.drag;
+    this.drag = null;
+    if (d) { d.piece.style.transform = ''; d.piece.style.zIndex = ''; }
   }
 
   /* opts: selected, dests[], lastMove{from,to}, check, stars[], marks[], hint{from,to}, animate{from,to} */
@@ -51,7 +114,7 @@ class BoardView {
         s.deco = deco;
       }
     }
-    if (opts.animate) this.animate(opts.animate.from, opts.animate.to);
+    if (opts.animate && !this.dropped) this.animate(opts.animate.from, opts.animate.to);
   }
 
   animate(from, to) {
