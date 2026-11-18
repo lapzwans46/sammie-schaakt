@@ -860,3 +860,6 @@ button.hero-avatar { padding: 0; }
   .modal { padding: 20px 18px; }
   .modal h2 { font-size: 1.6rem; }
 }
+
+.backup-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0; }
+.file-label { display: inline-block; cursor: pointer; }

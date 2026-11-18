@@ -80,6 +80,8 @@ Wisselen: tik op het poppetje op het startscherm. Nieuwe speler toevoegen kan al
 - 👪 *Tegenstanders*: poppetje, naam en niveau aanpassen, of zelf een nieuwe tegenstander maken.
 - 👤 *Spelers*: kinderen toevoegen, aanpassen of weghalen.
 - Geluid en pas-op-hulp (per kind), voortgang wissen.
+- *Reservekopie*: voortgang van alle spelers bewaren als bestandje en later terugzetten (ook op een nieuw apparaat).
+  De app vraagt het apparaat ook om de opslag als blijvend te markeren.
 
 ## Tegenstanders aanpassen of zelf maken
 

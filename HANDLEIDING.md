@@ -13,4 +13,5 @@
 - Alles wat Sam doet blijft op dit apparaat. Geen account, geen reclame, er wordt niks verstuurd.
 - ⚙️ rechtsboven is voor ouders (met een rekensommetje als slot). Daar zie je ook wat goed gaat en wat lastig is.
 - 🎨 linksboven: zelf de kleuren van het bord kiezen.
+- **Reservekopie:** ⚙️ → *Voortgang bewaren*. Bewaar het bestandje in Bestanden of mail het naar jezelf. Zo ben je niks kwijt bij een nieuwe iPad (terugzetten via ⚙️ → *Voortgang terugzetten*).
 - Geen geluid? Zet de stille modus van de iPad of iPhone uit.

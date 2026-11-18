@@ -27,6 +27,16 @@ function Settings() {
         <label class="toggle"><input type="checkbox" id="warn" ${s.warn ? 'checked' : ''}> Pas-op-hulp: waarschuwen als een stuk zomaar weggegeven wordt</label>
       </section>
       <section class="card">
+        <h3>Reservekopie</h3>
+        <p class="small">Bewaar de voortgang van alle spelers als bestandje (bijvoorbeeld in Bestanden of door het naar jezelf te mailen).
+        Zo kun je alles terugzetten, ook op een nieuwe iPad. <span id="persist"></span></p>
+        <div class="backup-buttons">
+          <button class="btn blue" id="bkSave">💾 Voortgang bewaren</button>
+          <label class="btn grey file-label">📂 Voortgang terugzetten<input type="file" id="bkLoad" accept=".json,application/json" hidden></label>
+        </div>
+        <p class="small" id="bkMsg"></p>
+      </section>
+      <section class="card">
         <h3>Opnieuw beginnen</h3>
         <p class="small">Wist alle voortgang van ${me.name} (sterren, prijzen, potjes). Het poppetje en de familie blijven.</p>
         <button class="btn red" id="reset">Voortgang van ${me.name} wissen</button>
@@ -44,6 +54,14 @@ function Settings() {
   $('#toProfiles').onclick = () => go(ProfilesAdmin);
   $('#sound').onchange = (e) => { s.sound = e.target.checked; Store.save(); applySettings(); };
   $('#warn').onchange = (e) => { s.warn = e.target.checked; Store.save(); };
+  $('#bkSave').onclick = async () => {
+    const r = await saveBackup();
+    $('#bkMsg').textContent = r === 'geannuleerd' ? '' : 'Reservekopie gemaakt. Bewaar het bestandje goed!';
+  };
+  $('#bkLoad').onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) restoreBackup(f, (msg) => { $('#bkMsg').textContent = msg; }); };
+  if (navigator.storage && navigator.storage.persisted) {
+    navigator.storage.persisted().then((ok) => { $('#persist') && ($('#persist').textContent = ok ? 'De opslag op dit apparaat is beveiligd. ✅' : ''); }).catch(() => {});
+  }
   $('#reset').onclick = () => ask(`Echt alles van ${me.name} wissen? Alle sterren en bekers zijn dan weg.`, () => {
     Store.reset();
     applySettings();
@@ -303,4 +321,66 @@ function ProfilesAdmin() {
       }, 'Ja, weghalen', 'Nee');
     };
   });
+}
+
+/* ---------- Reservekopie ----------
+   Alles van de app staat in de browseropslag onder 'sammieschaak-...'.
+   De reservekopie is gewoon een tekstbestand (JSON) met die gegevens. */
+const BACKUP_PREFIX = 'sammieschaak-';
+
+function makeBackup() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(BACKUP_PREFIX)) data[k] = localStorage.getItem(k);
+  }
+  return { app: 'Sammie Schaakt!', soort: 'reservekopie', versie: 1, datum: todayStr(), data };
+}
+
+/* Op iPad/iPhone opent het deel-menu (opslaan in Bestanden, mailen...). Elders wordt het gedownload. */
+async function saveBackup() {
+  Store.save();
+  Store.saveGlobal();
+  const json = JSON.stringify(makeBackup());
+  const name = `sammie-schaakt-reservekopie-${todayStr()}.json`;
+  const file = new File([json], name, { type: 'application/json' });
+  if (navigator.canShare && navigator.share) {
+    try {
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Sammie Schaakt! reservekopie' });
+        return 'gedeeld';
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return 'geannuleerd';
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  return 'gedownload';
+}
+
+/* Controleer het bestand, vraag of het echt mag, en zet alles terug */
+function restoreBackup(file, report) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let obj;
+    try { obj = JSON.parse(reader.result); } catch (e) { obj = null; }
+    const ok = obj && obj.app === 'Sammie Schaakt!' && obj.data && typeof obj.data['sammieschaak-global'] === 'string';
+    if (!ok) { Sound.play('oops'); report('Dit is geen reservekopie van Sammie Schaakt!'); return; }
+    ask(`Reservekopie van ${obj.datum || 'onbekende datum'} terugzetten? De voortgang die nu op dit apparaat staat, wordt dan vervangen.`, () => {
+      const old = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(BACKUP_PREFIX)) old.push(k); }
+      old.forEach((k) => localStorage.removeItem(k));
+      Object.entries(obj.data).forEach(([k, v]) => { if (k.startsWith(BACKUP_PREFIX) && typeof v === 'string') localStorage.setItem(k, v); });
+      location.reload();
+    }, 'Ja, terugzetten', 'Nee');
+  };
+  reader.onerror = () => report('Het bestand kon niet gelezen worden.');
+  reader.readAsText(file);
 }
