@@ -28,15 +28,21 @@ class BoardView {
     this.el.addEventListener('pointerdown', (e) => this.down(e));
     this.el.addEventListener('pointermove', (e) => this.move(e));
     this.el.addEventListener('pointerup', (e) => this.up(e));
-    this.el.addEventListener('pointercancel', () => this.cancel());
+    // iPad breekt een sleepbeweging soms af (systeemgebaar, lang drukken):
+    // dan zetten we het stuk toch neer op de laatste plek van de vinger.
+    this.el.addEventListener('pointercancel', () => this.finish());
+    this.el.addEventListener('lostpointercapture', () => this.finish());
     this.el.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  /* Welk vakje ligt onder de vinger? Net naast het bord telt het dichtstbijzijnde randvakje
+     (kinderen schieten vaak iets door). Ver naast het bord: geen vakje. */
   squareAt(x, y) {
     const r = this.el.getBoundingClientRect();
-    if (x < r.left || y < r.top || x >= r.right || y >= r.bottom) return null;
-    const c = Math.floor(((x - r.left) / r.width) * 8);
-    const row = Math.floor(((y - r.top) / r.height) * 8);
+    const cell = r.width / 8;
+    if (x < r.left - cell || y < r.top - cell || x > r.right + cell || y > r.bottom + cell) return null;
+    const c = Math.min(7, Math.max(0, Math.floor(((x - r.left) / r.width) * 8)));
+    const row = Math.min(7, Math.max(0, Math.floor(((y - r.top) / r.height) * 8)));
     return row * 8 + c;
   }
 
@@ -50,7 +56,7 @@ class BoardView {
     const s = this.squares[i];
     const piece = s.holder.querySelector('.piece');
     if (piece && s.sq.classList.contains('selected')) {
-      this.drag = { i, x: e.clientX, y: e.clientY, piece, moved: false };
+      this.drag = { i, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, piece, moved: false };
       try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
     }
   }
@@ -58,6 +64,8 @@ class BoardView {
   move(e) {
     const d = this.drag;
     if (!d) return;
+    e.preventDefault();
+    d.lx = e.clientX; d.ly = e.clientY;
     const dx = e.clientX - d.x, dy = e.clientY - d.y;
     if (!d.moved && Math.hypot(dx, dy) < 10) return;
     d.moved = true;
@@ -67,12 +75,18 @@ class BoardView {
   }
 
   up(e) {
+    if (this.drag) { this.drag.lx = e.clientX; this.drag.ly = e.clientY; }
+    this.finish();
+  }
+
+  /* Sleepbeweging afronden: stuk neerzetten op de laatste plek van de vinger */
+  finish() {
     const d = this.drag;
     this.drag = null;
     if (!d || !d.moved) return;
     d.piece.style.transform = '';
     d.piece.style.zIndex = '';
-    const t = this.squareAt(e.clientX, e.clientY);
+    const t = this.squareAt(d.lx, d.ly);
     if (t !== null && t !== d.i) {
       this.dropped = true; // na slepen niet nog eens laten 'vliegen'
       this.onTap(t);

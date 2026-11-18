@@ -948,3 +948,6 @@ html, body { overscroll-behavior: none; }
   .dip-spark { animation: none; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* iPad: stukken niet als plaatje laten 'oppakken' door het systeem */
+.piece, .piece-svg, .board svg { -webkit-user-drag: none; user-drag: none; -webkit-touch-callout: none; }
