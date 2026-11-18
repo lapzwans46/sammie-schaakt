@@ -542,7 +542,13 @@ function Exercise(step, ui) {
   let usedHint = false;
   const task = ui.taskText || step.text;
 
+  /* eigen timers: 'Opnieuw' zet ze allemaal stop */
+  const elaterIds = [];
+  const elater = (fn, ms) => { const t = later(fn, ms); elaterIds.push(t); return t; };
+  const elaterStop = () => { elaterIds.forEach(clearTimeout); elaterIds.length = 0; };
+
   const reset = () => {
+    elaterStop();
     state = step.fen ? Chess.fromFEN(step.fen) : Chess.fromPieces(step.pieces, 'w');
     stars = new Set((step.stars || []).map(Chess.sqIndex));
     selected = null; dests = []; last = null; locked = false; marks = [];
@@ -624,15 +630,15 @@ function Exercise(step, ui) {
     last = { from: m.from, to: m.to };
     selected = null; dests = []; hint = null;
     Sound.play(m.captured ? 'capture' : 'move');
-    if (stars.has(m.to)) { stars.delete(m.to); later(() => { Sound.play('star'); view.pop(m.to); }, 150); }
+    if (stars.has(m.to)) { stars.delete(m.to); elater(() => { Sound.play('star'); view.pop(m.to); }, 150); }
     draw({ from: m.from, to: m.to });
-    if (m.promo) { later(() => Sound.play('magic'), 250); ui.setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy'); }
+    if (m.promo) { elater(() => Sound.play('magic'), 250); ui.setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy'); }
 
     if (solvedNow(m)) {
       locked = true;
       Stats.skill(step.goal || step.type, wrongCount === 0 && !usedHint);
       if (step.goal === 'fork') { marks = Tactics.targets(state, m.to); draw(); }
-      later(() => {
+      elater(() => {
         Sound.play('good');
         confetti(50);
         ui.setText(pick(PRAISE), 'happy');
@@ -644,8 +650,8 @@ function Exercise(step, ui) {
       if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
       const g = GOALS[step.goal];
       if (g.danger) { const d = g.danger(state); if (d !== null) { marks = [d]; draw(); } }
-      later(() => { Sound.play('oops'); ui.setText(g.wrong(state, m), 'oops'); }, 400);
-      later(() => {
+      elater(() => { Sound.play('oops'); ui.setText(g.wrong(state, m), 'oops'); }, 400);
+      elater(() => {
         reset();
         ui.setText(wrongCount >= 2 ? task + ' Lukt het niet? Druk op 💡.' : task);
       }, 2600);
@@ -1082,6 +1088,11 @@ function Game(oi, human = null) {
   const player = Store.profile();
   let G;
 
+  /* eigen timers: 'Opnieuw' zet ze allemaal stop */
+  const glaterIds = [];
+  const glater = (fn, ms) => { const t = later(fn, ms); glaterIds.push(t); return t; };
+  const glaterStop = () => { glaterIds.forEach(clearTimeout); glaterIds.length = 0; };
+
   app.innerHTML = `
   <div class="screen game">
     <div class="topbar">
@@ -1137,6 +1148,7 @@ function Game(oi, human = null) {
   }
 
   function newGame() {
+    glaterStop();
     closeModal();
     G = {
       state: Chess.fromFEN(Chess.START_FEN),
@@ -1266,7 +1278,7 @@ function Game(oi, human = null) {
     apply(m);
     if (together && mover === 'b') return blackHumanMove(m);
     if (m.captured) G.capMe.push(m.captured);
-    if (m.promo) { banner(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'good'); later(() => Sound.play('magic'), 200); }
+    if (m.promo) { banner(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'good'); glater(() => Sound.play('magic'), 200); }
     if (m.flag === 'castleK' || m.flag === 'castleQ') banner('Goed zo! Gerokeerd! 🏰', 'good');
 
     const st = Chess.gameStatus(G.state, G.keys);
@@ -1274,7 +1286,7 @@ function Game(oi, human = null) {
 
     if (together) {
       draw({ from: m.from, to: m.to });
-      if (Chess.inCheck(G.state, 'b')) { banner(`Schaak! ${opp.name}, red je koning! 👑`, 'warn'); oppMood('surprised'); later(() => Sound.play('check'), 250); }
+      if (Chess.inCheck(G.state, 'b')) { banner(`Schaak! ${opp.name}, red je koning! 👑`, 'warn'); oppMood('surprised'); glater(() => Sound.play('check'), 250); }
       else if (m.captured) oppMood('sad');
       else oppMood('thinking');
       $('#meFace').innerHTML = Avatars.html(player, m.captured ? 'laugh' : 'happy');
@@ -1282,19 +1294,19 @@ function Game(oi, human = null) {
     }
 
     let reacted = false;
-    if (Chess.inCheck(G.state, 'b')) { oppSay(opp.say.gotCheck, 'surprised'); reacted = true; later(() => Sound.play('check'), 250); }
+    if (Chess.inCheck(G.state, 'b')) { oppSay(opp.say.gotCheck, 'surprised'); reacted = true; glater(() => Sound.play('check'), 250); }
     else if (m.captured && AI.VAL[m.captured[1]] >= 100) { oppSay(opp.say.lostPiece, 'sad'); reacted = true; }
 
     G.busy = true;
     draw({ from: m.from, to: m.to });
-    if (!reacted) later(() => { if (Math.random() < 0.35) oppSay(opp.say.think, 'thinking'); else oppMood('thinking'); }, 300);
-    else later(() => oppMood('thinking'), 1600);
+    if (!reacted) glater(() => { if (Math.random() < 0.35) oppSay(opp.say.think, 'thinking'); else oppMood('thinking'); }, 300);
+    else glater(() => oppMood('thinking'), 1600);
 
     const startT = performance.now();
-    later(() => {
+    glater(() => {
       const am = AI.chooseMove(G.state, opp.level);
       const minWait = reacted ? 1900 : 900 + Math.random() * 700;
-      later(() => opponentMove(am), Math.max(0, minWait - (performance.now() - startT)));
+      glater(() => opponentMove(am), Math.max(0, minWait - (performance.now() - startT)));
     }, 350);
   }
 
@@ -1306,7 +1318,7 @@ function Game(oi, human = null) {
     const st = Chess.gameStatus(G.state, G.keys);
     if (st) return end(st);
     if (Chess.inCheck(G.state, me)) {
-      later(() => Sound.play('check'), 250);
+      glater(() => Sound.play('check'), 250);
       banner(`Schaak! ${playerName()}, red je koning! 👑`, 'warn');
       oppMood('wink');
       $('#meFace').innerHTML = Avatars.html(player, 'surprised');
@@ -1326,7 +1338,7 @@ function Game(oi, human = null) {
     const st = Chess.gameStatus(G.state, G.keys);
     if (st) return end(st);
     if (Chess.inCheck(G.state, me)) {
-      later(() => Sound.play('check'), 250);
+      glater(() => Sound.play('check'), 250);
       banner('Schaak! Red je koning! 👑', 'warn');
       oppSay(opp.say.gaveCheck, 'wink');
     } else if (m.captured) {
@@ -1353,7 +1365,7 @@ function Game(oi, human = null) {
     if (G.busy || G.over) return;
     Sound.play('tap');
     $('#turn').textContent = 'Pim denkt even mee...';
-    later(() => {
+    glater(() => {
       const h = AI.hint(G.state);
       if (!h) return;
       G.hints++;
@@ -1391,7 +1403,7 @@ function Game(oi, human = null) {
       if (st === 'checkmate') {
         const winner = whiteWon ? player : opp;
         const loser = whiteWon ? opp : player;
-        later(() => { Sound.play('win'); confetti(140); }, 300);
+        glater(() => { Sound.play('win'); confetti(140); }, 300);
         oppMood(blackWon ? 'laugh' : 'happy');
         $('#meFace').innerHTML = Avatars.html(player, whiteWon ? 'laugh' : 'happy');
         html = `<div class="trophy">🏆</div><h2>Schaakmat! ${winner.name} wint!</h2>
@@ -1406,7 +1418,7 @@ function Game(oi, human = null) {
       if (whiteWon) {
         d.wins[opp.id] = (d.wins[opp.id] || 0) + 1;
         oppSay(opp.say.lose, 'happy');
-        later(() => { Sound.play('win'); confetti(140); }, 300);
+        glater(() => { Sound.play('win'); confetti(140); }, 300);
         html = `<div class="trophy">🏆</div><h2>Schaakmat! Jij wint!</h2>
           <div class="modal-avatar">${Avatars.html(opp, 'laugh')}</div>
           <p class="quote">"${$('#oppSay').textContent}"</p>
@@ -1414,7 +1426,7 @@ function Game(oi, human = null) {
           ${firstWin && nextOpp ? `<p class="world-unlock">Probeer nu ${nextOpp.name} eens!</p>` : ''}`;
       } else if (blackWon) {
         oppSay(opp.say.win, 'laugh');
-        later(() => Sound.play('lose'), 300);
+        glater(() => Sound.play('lose'), 300);
         html = `<h2>Schaakmat... ${opp.name} wint</h2>
           <div class="modal-avatar">${Avatars.html(opp, 'wink')}</div>
           <p class="quote">"${$('#oppSay').textContent}"</p>
@@ -1425,7 +1437,7 @@ function Game(oi, human = null) {
       }
     }
     Store.save();
-    later(() => {
+    glater(() => {
       const m = modal(`${html}
         <div class="modal-buttons">
           ${firstWin && nextOpp ? `<button class="btn orange" id="mNextOpp">Speel tegen ${nextOpp.name} ▶</button>` : ''}

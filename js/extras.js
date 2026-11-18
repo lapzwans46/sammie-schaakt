@@ -188,9 +188,15 @@ function PawnRace(levelKey) {
   const view = new BoardView(wrap, { onTap: (i) => tap(i) });
   let state, sel, dests, last, busy, over, hint;
 
+  /* eigen timers: 'Opnieuw' zet ze allemaal stop */
+  const rlaterIds = [];
+  const rlater = (fn, ms) => { const t = later(fn, ms); rlaterIds.push(t); return t; };
+  const rlaterStop = () => { rlaterIds.forEach(clearTimeout); rlaterIds.length = 0; };
+
   const draw = (animate) => view.render(state.board, { selected: sel, dests: dests.map((m) => m.to), lastMove: last, hint, animate });
 
   function reset() {
+    rlaterStop();
     state = Chess.fromFEN(RACE_FEN);
     sel = null; dests = []; last = null; busy = false; over = false; hint = null;
     setText('Pionnenrace! Wie is het eerst aan de overkant? Jij begint!');
@@ -233,9 +239,9 @@ function PawnRace(levelKey) {
     if (kidWon) {
       Store.data.extra.raceWins++;
       Store.save();
-      later(() => { Sound.play('win'); confetti(120); }, 300);
-    } else later(() => Sound.play('lose'), 300);
-    later(() => {
+      rlater(() => { Sound.play('win'); confetti(120); }, 300);
+    } else rlater(() => Sound.play('lose'), 300);
+    rlater(() => {
       const m = modal(`
         <div class="trophy">${kidWon ? '🏁' : '🐴'}</div>
         <h2>${kidWon ? 'Jij wint!' : 'Pim wint deze keer'}</h2>
@@ -260,7 +266,7 @@ function PawnRace(levelKey) {
     if (!qMoves(Chess.legalMoves(state)).length) return finish(true, 'Pim kan niet meer zetten. Jij wint!');
     setText(m.captured ? 'Hap! Jij pakte mijn pion.' : 'Hmm, even denken...', m.captured ? 'oops' : '');
     busy = true;
-    later(() => {
+    rlater(() => {
       const pm = racePick(state, levelKey);
       state = Chess.makeMove(state, pm);
       last = { from: pm.from, to: pm.to };
@@ -296,6 +302,11 @@ function BoardSetup() {
   let mistakes = 0;
   let hint = null;
 
+  /* eigen timers: 'Opnieuw' zet ze allemaal stop */
+  const slaterIds = [];
+  const slater = (fn, ms) => { const t = later(fn, ms); slaterIds.push(t); return t; };
+  const slaterStop = () => { slaterIds.forEach(clearTimeout); slaterIds.length = 0; };
+
   app.innerHTML = teacherLayout('Bord opzetten');
   $('#back').onclick = () => go(MiniGames);
   const setText = makeSetText();
@@ -317,6 +328,7 @@ function BoardSetup() {
   };
 
   function start() {
+    slaterStop();
     color = 'w';
     board = new Array(64).fill(null);
     mistakes = 0;
@@ -362,7 +374,7 @@ function BoardSetup() {
       mistakes++;
       Sound.play('oops');
       view.render(board, { marks: [i] });
-      later(() => draw(), 600);
+      slater(() => draw(), 600);
       setText(board[i] ? 'Daar staat al iets!' : `Bijna! ${SETUP_TIPS[type]}`, 'oops');
     }
   }
@@ -372,11 +384,11 @@ function BoardSetup() {
     confetti(60);
     if (color === 'w') {
       setText('Super! Nu de zwarte stukken. Die staan bovenaan.', 'happy');
-      later(() => { color = 'b'; fillTray(); }, 1800);
+      slater(() => { color = 'b'; fillTray(); }, 1800);
     } else {
       Store.data.extra.setups++;
       Store.save();
-      later(() => {
+      slater(() => {
         Sound.play('win');
         confetti(120);
         const m = modal(`
