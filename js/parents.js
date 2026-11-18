@@ -78,7 +78,6 @@ const SKILL_INFO = {
   escape: ['Koning redden', 'Drie manieren om schaak op te lossen: weglopen, ertussen zetten of slaan.'],
   mate: ['Schaakmat geven', 'Kijk bij mat-puzzels eerst: waar kan de koning nog heen?'],
   castle: ['Rokeren', 'Koning twee stapjes naar de toren, toren springt eroverheen.'],
-  enpassant: ['En passant', 'Een lastige regel. Niet erg als die nog niet zit!'],
   hanging: ['Losse stukken zien', 'Vraag bij elk stuk van de ander: "Wie beschermt dit stuk?"'],
   safe: ['Eigen stukken redden', 'Vraag voor elke zet: "Kan de ander iets van mij pakken?"'],
   fork: ['Vork maken', 'Zoek samen vakjes waar het paard twee stukken tegelijk raakt.'],
@@ -101,7 +100,7 @@ function Overview(pid) {
   const dailyCount = ((d.daily || {}).days || []).length;
 
   // vaardigheden in lesvolgorde
-  const order = ['stars', 'capture', 'quiz', 'check', 'escape', 'mate', 'castle', 'enpassant', 'hanging', 'safe', 'fork', 'to'];
+  const order = ['stars', 'capture', 'quiz', 'check', 'escape', 'mate', 'castle', 'hanging', 'safe', 'fork', 'to'];
   const skills = order.filter((k) => stats.skills[k] && stats.skills[k].n > 0)
     .map((k) => ({ k, n: stats.skills[k].n, first: stats.skills[k].first, rate: stats.skills[k].first / stats.skills[k].n }));
   const weakest = skills.filter((x) => x.n >= 3 && x.k !== 'stars').sort((a, b) => a.rate - b.rate).slice(0, 2).filter((x) => x.rate < 0.75);

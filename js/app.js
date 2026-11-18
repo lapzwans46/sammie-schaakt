@@ -472,10 +472,6 @@ const GOALS = {
     wrong: () => 'Zet de koning twee stapjes naar de toren!',
   },
   escape: { ok: () => true, wrong: () => 'Probeer nog eens!' },
-  enpassant: {
-    ok: (s, m) => m.flag === 'ep',
-    wrong: () => 'Dat was nog geen en passant. Ga schuin naar het lege vakje achter de zwarte pion!',
-  },
   hanging: {
     ok: (s, m) => !!m.captured && !Chess.isAttacked(s.board, m.to, 'b'),
     wrong: (s, m) => (m.captured ? 'Oei! Dat stuk wordt beschermd. Zoek een ander!' : 'Je moet een stuk pakken!'),
