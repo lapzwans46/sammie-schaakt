@@ -194,7 +194,8 @@ const LESSONS = [
       { type: 'goal', goal: 'safe', text: 'Zet de toren op een veilig vakje!', fen: '6k1/8/8/3p4/4R3/8/8/6K1 w - - 0 1' },
       { type: 'goal', goal: 'safe', text: 'Red je koningin!', fen: '6k1/8/8/5n2/3Q4/8/8/6K1 w - - 0 1' },
       { type: 'goal', goal: 'safe', text: 'Red je paard!', fen: '2r3k1/8/8/8/2N5/8/1P6/6K1 w - - 0 1' },
-      { type: 'goal', goal: 'safe', text: 'Red je toren én je loper. Met één zet!', fen: '6k1/8/8/8/1n6/8/R1B5/6K1 w - - 0 1' },
+      { type: 'talk', text: 'Twee stukken in gevaar? Pak dan de aanvaller!', fen: '8/5pk1/8/8/8/1p6/R1B5/6K1 w - - 0 1', mark: ['b3', 'a2', 'c2'] },
+      { type: 'goal', goal: 'safe', text: 'Red je toren én je loper. Met één zet!', fen: '8/5pk1/8/8/8/1p6/R1B5/6K1 w - - 0 1' },
     ],
   },
   {
