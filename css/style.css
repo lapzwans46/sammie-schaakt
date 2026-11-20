@@ -93,6 +93,8 @@ button:disabled { opacity: .45; cursor: default; }
   font-weight: 900;
   color: #fff;
   text-shadow: 0 3px 0 rgba(44, 116, 201, .55);
+  /* altijd één regel: dan is de balk bovenin overal even hoog */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .spacer { width: 56px; flex: none; }
 
@@ -186,6 +188,7 @@ button:disabled { opacity: .45; cursor: default; }
   flex: 1;
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr); /* een hoge linkerkant duwt het bord niet weg */
   gap: 22px;
   align-items: center;
   max-width: 1200px;
@@ -226,7 +229,8 @@ button:disabled { opacity: .45; cursor: default; }
 
 /* ---------- BORD ---------- */
 .board-wrap {
-  --bs: min(calc(100vh - 120px), 58vw, 720px);
+  /* één maat voor élk bord (les, puzzel, potje, spelletje): zo staat het bord overal op dezelfde plek */
+  --bs: min(calc(100vh - 120px), calc(100vw - 340px), 720px);
   position: relative;
   width: var(--bs);
   height: var(--bs);
@@ -318,17 +322,19 @@ button:disabled { opacity: .45; cursor: default; }
 .game-body {
   flex: 1;
   display: grid;
-  grid-template-columns: auto minmax(240px, 380px);
-  grid-template-rows: auto 1fr;
-  grid-template-areas: "board opp" "board me";
-  gap: 18px 26px;
-  justify-content: center;
+  /* zelfde indeling als een les: mensen links, bord rechts */
+  grid-template-columns: minmax(240px, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "opp board" "me board";
+  gap: 22px;
   align-items: start;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
-.board-zone { grid-area: board; }
+.board-zone { grid-area: board; align-self: center; }
 .opp-side { grid-area: opp; }
 .me-side { grid-area: me; align-self: end; }
-.game .board-wrap { --bs: min(calc(100vh - 110px), calc(100vw - 320px), 760px); }
 .side { display: flex; flex-direction: column; gap: 14px; }
 .player-card {
   display: flex; align-items: center; gap: 12px;
@@ -407,28 +413,30 @@ button:disabled { opacity: .45; cursor: default; }
 @media (orientation: portrait) {
   .lesson-body {
     grid-template-columns: 1fr;
-    grid-template-areas: "teacher" "stage" "actions";
+    grid-template-rows: none;
+    grid-template-areas: "teacher" "stage" "actions" "tray";
     align-content: start;
-    gap: 14px;
+    gap: 12px;
   }
   .teacher-col { display: contents; }
-  .teacher { grid-area: teacher; flex-direction: row; align-items: center; }
+  .teacher { grid-area: teacher; flex-direction: row; align-items: center; height: 120px; }
+  .teacher-bubble { max-height: 100%; overflow: hidden; }
   .teacher-face { width: 90px; height: 90px; flex: none; }
   .teacher-bubble::before { top: 50%; left: -14px; margin: -12px 0 0; border: 12px solid transparent; border-right: 16px solid #fff; border-left: 0; }
   .teacher-bubble.happy::before { border-right-color: #e7ffe9; border-bottom-color: transparent; }
   .teacher-bubble.oops::before { border-right-color: #fff0e6; border-bottom-color: transparent; }
   .stage { grid-area: stage; }
   .actions { grid-area: actions; }
-  .board-wrap { --bs: min(calc(100vw - 32px), calc(100vh - 330px), 720px); }
+  .board-wrap { --bs: min(calc(100vw - 32px), calc(100vh - 400px), 720px); }
 
   .game-body {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     grid-template-areas: "opp" "board" "me";
     justify-items: center;
+    align-content: start;
     gap: 12px;
   }
-  .game .board-wrap { --bs: min(calc(100vw - 32px), calc(100vh - 400px), 760px); }
   .side { width: 100%; max-width: 760px; }
   .opp-side { flex-direction: row; align-items: center; }
   .opp-side .player-card { flex: none; }
@@ -723,13 +731,12 @@ button.hero-avatar { padding: 0; }
 .gc-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
 
 /* bord opzetten */
-.setup-col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.setup-col .board-wrap { --bs: min(calc(100vh - 260px), 52vw, 640px); }
-.tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 640px; background: rgba(255, 255, 255, .7); border-radius: 20px; padding: 8px; min-height: 70px; }
+.tray { grid-area: tray; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 640px; background: rgba(255, 255, 255, .7); border-radius: 20px; padding: 8px; min-height: 70px; }
 .tray-piece { width: 58px; height: 58px; border-radius: 14px; background: #fff; box-shadow: 0 4px 0 #d9cde6; padding: 3px; border: 3px solid transparent; }
 .tray-piece.on { border-color: var(--yellow); background: #fff6d6; transform: translateY(-4px); }
+.teacher-col .tray { gap: 4px; padding: 6px; }
+.teacher-col .tray-piece { width: 50px; height: 50px; }
 .tray-empty { font-weight: 900; font-size: 1.3rem; align-self: center; padding: 0 12px; }
-@media (orientation: portrait) { .setup-col .board-wrap { --bs: min(calc(100vw - 32px), calc(100vh - 470px), 640px); } }
 
 /* diploma's */
 .dip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; max-width: 1000px; width: 100%; margin: 0 auto; }
@@ -829,8 +836,7 @@ button.hero-avatar { padding: 0; }
   .tool { padding: 8px 2px 6px; font-size: .9rem; border-radius: 16px; }
   .tool .ti { font-size: 1.5rem; }
   .turn { font-size: 1.1rem; padding: 8px; }
-  .game .board-wrap { --bs: min(calc(100vw - 24px), calc(100vh - 330px), 760px); }
-  .board-wrap { --bs: min(calc(100vw - 24px), calc(100vh - 300px), 720px); }
+  .board-wrap { --bs: min(calc(100vw - 24px), calc(100vh - 330px), 720px); }
 
   /* lessen */
   .teacher-face { width: 70px; height: 70px; padding: 8px; }
@@ -842,7 +848,6 @@ button.hero-avatar { padding: 0; }
 
   /* bord opzetten */
   .tray-piece { width: 44px; height: 44px; }
-  .setup-col .board-wrap { --bs: min(calc(100vw - 24px), calc(100vh - 420px), 640px); }
 
   /* spelletjes, prijzen, diploma's */
   .gc-pic .piece-svg { width: 54px; height: 54px; }
@@ -885,7 +890,7 @@ html, body { overscroll-behavior: none; }
   .opp-bubble { max-height: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 }
 @media (max-width: 520px) {
-  .opp-side { height: 92px; }
+  .opp-side, .lesson .teacher { height: 92px; }
   .opp-bubble { font-size: .95rem; padding: 8px 12px; }
 }
 

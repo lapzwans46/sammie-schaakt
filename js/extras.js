@@ -311,7 +311,9 @@ function BoardSetup() {
   $('#back').onclick = () => go(MiniGames);
   const setText = makeSetText();
   const stage = $('#stage');
-  stage.innerHTML = '<div class="setup-col"><div class="board-wrap" id="sbw"></div><div class="tray" id="tray"></div></div>';
+  // het bord staat op dezelfde plek als in de lessen; de bak met stukken staat bij Pim
+  stage.innerHTML = '<div class="board-wrap" id="sbw"></div>';
+  $('#actions').insertAdjacentHTML('afterend', '<div class="tray" id="tray"></div>');
   const view = new BoardView($('#sbw'), { onTap: (i) => tapSquare(i) });
 
   $('#actions').innerHTML = '<button class="btn grey" id="again">↺ Opnieuw</button><button class="btn yellow" id="hintBtn">💡 Hint</button>';
@@ -353,7 +355,7 @@ function BoardSetup() {
 
   function tapSquare(i) {
     if (pick === null) {
-      if (tray.length) { Sound.play('oops'); setText('Kies eerst onderaan een stuk!', 'oops'); }
+      if (tray.length) { Sound.play('oops'); setText('Kies eerst een stuk uit de bak!', 'oops'); }
       return;
     }
     const type = tray[pick];
