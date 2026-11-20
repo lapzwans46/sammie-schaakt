@@ -766,9 +766,15 @@ function LessonPlayer(li) {
     actions.innerHTML = '';
     setText(step.text);
 
+    demoStop();
     if (step.type === 'talk') {
-      if (step.pieces || step.fen) showBoard(step);
+      const b = (step.pieces || step.fen) ? showBoard(step) : null;
       nextButton();
+      if (b && step.demo) {
+        actions.insertAdjacentHTML('afterbegin', '<button class="btn blue" id="replay">🔁 Nog eens</button>');
+        $('#replay').onclick = () => { Sound.play('tap'); playDemo(b, step); };
+        demoTimers.push(later(() => playDemo(b, step), 900));
+      }
     } else if (step.type === 'quiz') {
       showQuiz(step);
     } else {
@@ -793,17 +799,48 @@ function LessonPlayer(li) {
       selected: step.showMoves ? Chess.sqIndex(step.showMoves) : null,
       dests, marks: (step.mark || []).map(Chess.sqIndex), check: k,
     });
+    return { view, st };
+  }
+
+  /* Filmpje: step.demo = ['e1-g1', ...]. De stukken bewegen vanzelf (langzaam),
+     zodat Sam ziet hoe een zet gaat. Rokeren laat ook de toren bewegen. */
+  let demoTimers = [];
+  function demoStop() { demoTimers.forEach(clearTimeout); demoTimers = []; }
+  function playDemo({ view, st }, step) {
+    demoStop();
+    let s = st;
+    view.render(s.board, {});
+    const SLOW = 650;
+    step.demo.forEach((mv, n) => {
+      demoTimers.push(later(() => {
+        const [a, b] = mv.split('-').map(Chess.sqIndex);
+        const s2 = { ...s, turn: s.board[a][0] };
+        const m = Chess.pseudoMoves(s2, a).find((x) => x.to === b && (!x.promo || x.promo === 'Q'))
+          || { from: a, to: b, piece: s.board[a], captured: s.board[b] };
+        s = Chess.makeMove(s2, m);
+        const last = n === step.demo.length - 1;
+        const k = Chess.inCheck(s, s.turn) ? Chess.findKing(s.board, s.turn) : null;
+        view.render(s.board, { lastMove: { from: a, to: b }, check: k, marks: last ? (step.markAfter || []).map(Chess.sqIndex) : [] });
+        view.animate(a, b, SLOW);
+        if (m.flag === 'castleK') view.animate(b + 1, b - 1, SLOW + 250);
+        if (m.flag === 'castleQ') view.animate(b - 2, b + 1, SLOW + 250);
+        Sound.play(m.captured ? 'capture' : 'move');
+      }, 500 + n * 1500));
+    });
   }
 
   function showQuiz(step) {
     const box = document.createElement('div');
     box.className = 'quiz';
+    // Quiz met een bordje erbij: bord rechts, knoppen onder Pim
+    const withBoard = !!(step.pieces || step.fen);
+    if (withBoard) { showBoard(step); box.classList.add('small'); }
     box.innerHTML = step.options.map((o, i) => `
       <button class="quiz-btn" data-i="${i}">
         ${o.piece ? `<div class="quiz-piece">${Pieces.svg(o.piece)}</div>` : ''}
         <span>${o.label}</span>
       </button>`).join('');
-    stage.appendChild(box);
+    (withBoard ? actions : stage).appendChild(box);
     let solved = false;
     let wrong = 0;
     box.querySelectorAll('.quiz-btn').forEach((b) => {
@@ -817,7 +854,11 @@ function LessonPlayer(li) {
           Sound.play('good');
           confetti(40);
           setText(pick(PRAISE), 'happy');
-          nextButton('Verder ▶', true);
+          if (withBoard) {
+            box.querySelectorAll('.quiz-btn:not(.right)').forEach((x) => x.remove());
+            box.insertAdjacentHTML('beforeend', '<button class="btn green huge pulse" id="next">Verder ▶</button>');
+            $('#next').onclick = () => { Sound.play('tap'); advance(); };
+          } else nextButton('Verder ▶', true);
         } else {
           b.classList.remove('shake'); b.getBoundingClientRect(); b.classList.add('shake', 'wrong');
           Sound.play('oops');

@@ -131,7 +131,7 @@ class BoardView {
     if (opts.animate && !this.dropped) this.animate(opts.animate.from, opts.animate.to);
   }
 
-  animate(from, to) {
+  animate(from, to, ms = 280) {
     const el = this.squares[to].holder.querySelector('.piece');
     if (!el) return;
     const dx = (from % 8) - (to % 8);
@@ -140,9 +140,9 @@ class BoardView {
     el.style.transform = `translate(${dx * 100}%, ${dy * 100}%)`;
     el.style.zIndex = 5;
     el.getBoundingClientRect(); // forceer tekenen
-    el.style.transition = 'transform .28s cubic-bezier(.3,1.3,.5,1)';
+    el.style.transition = `transform ${ms}ms cubic-bezier(.3,1.3,.5,1)`;
     el.style.transform = '';
-    setTimeout(() => { el.style.zIndex = ''; }, 300);
+    setTimeout(() => { el.style.zIndex = ''; }, ms + 20);
   }
 
   shake(i) {

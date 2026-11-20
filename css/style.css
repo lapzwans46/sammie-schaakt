@@ -226,6 +226,9 @@ button:disabled { opacity: .45; cursor: default; }
 .quiz-piece { width: 90px; height: 90px; }
 .quiz-btn.right { background: #d9ffd9; box-shadow: 0 7px 0 var(--green-d); transform: scale(1.08); }
 .quiz-btn.wrong { background: #ffe1e1; }
+.quiz.small { gap: 12px; }
+.quiz.small .quiz-btn { min-width: 110px; padding: 12px 18px; font-size: 1.35rem; }
+.quiz.small .quiz-piece { width: 54px; height: 54px; }
 
 /* ---------- BORD ---------- */
 .board-wrap {
