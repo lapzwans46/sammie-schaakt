@@ -133,7 +133,19 @@ sw.js             offline werken op de iPad
 manifest.json     app-gegevens voor het beginscherm
 img/icon-*.png    app-icoontjes
 robots.txt        niet opnemen in zoekmachines
+tools/puzzelcontrole.html  controleert alle lessen en puzzels (open in de browser)
 ```
+
+## Puzzels controleren
+
+Open `tools/puzzelcontrole.html` in de browser na elke nieuwe of veranderde les of puzzel.
+Die controleert met de regels van de app zelf dat:
+
+- elke stelling geldig is (zwart staat bijvoorbeeld niet al schaak);
+- elke opdracht **precies één** goede zet heeft (alleen de uitleg-opdrachten 'zet een stuk naar het midden' mogen er meer hebben);
+- alle sterren- en sla-opdrachten te doen zijn.
+
+Bovenaan staat een groen vinkje of een rode lijst met wat er niet klopt.
 
 ## Bewuste keuzes
 

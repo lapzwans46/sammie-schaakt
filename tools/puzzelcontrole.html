@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Puzzelcontrole</title>
+  <!--
+    Controleert alle opdrachten in de lessen en alle puzzels:
+    - is de stelling geldig (zwart staat niet al schaak, geen pion op de eerste/laatste rij, ...)?
+    - is er precies één goede zet? (uitzondering: 'to'-opdrachten, dat zijn uitleg-opdrachten)
+    - zijn alle sterren- en sla-opdrachten te doen?
+    Open dit bestand gewoon in de browser (dubbelklik). De titel wordt 'OK' of 'FOUT'.
+  -->
+  <style>
+    body { font: 15px/1.4 system-ui, sans-serif; margin: 20px; color: #222; }
+    h1 { font-size: 1.4rem; }
+    .sum { font-size: 1.2rem; font-weight: 700; padding: 10px 14px; border-radius: 10px; display: inline-block; }
+    .sum.ok { background: #d9ffd9; } .sum.bad { background: #ffe1e1; }
+    table { border-collapse: collapse; margin-top: 14px; width: 100%; }
+    td, th { text-align: left; padding: 4px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr.bad td { background: #ffe9e9; }
+    code { font-size: 13px; }
+    #app { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Puzzelcontrole Sammie Schaakt!</h1>
+  <div id="sum" class="sum">Bezig…</div>
+  <table><thead><tr><th>Waar</th><th>Soort</th><th>Uitslag</th><th>Opdracht</th></tr></thead><tbody id="rows"></tbody></table>
+  <pre id="tekst" hidden></pre>
+  <div id="app"></div>
+  <script src="../js/chess.js"></script>
+  <script src="../js/ai.js"></script>
+  <script src="../js/pieces.js"></script>
+  <script src="../js/avatars.js"></script>
+  <script src="../js/sound.js"></script>
+  <script src="../js/board.js"></script>
+  <script src="../js/family.js"></script>
+  <script src="../js/lessons.js"></script>
+  <script src="../js/puzzles.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="puzzelcontrole.js"></script>
+</body>
+</html>
