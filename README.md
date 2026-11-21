@@ -15,13 +15,21 @@ Tip: druk op **F11** voor volledig scherm.
 
 ## Wat zit erin
 
-**19 lessen in 3 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
+**27 lessen in 5 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
 
 | Wereld | Lessen |
 |---|---|
 | 1. De stukken | het bord, toren, loper, koningin, koning, paard, pion |
 | 2. De regels | slaan, wat is een stuk waard, schaak, schaakmat, rokeren, klaar voor een potje |
 | 3. Slim spelen | losse stukken, red je stuk, de vork, mat-trucjes, een goed begin (met het herdersmatje), schaakmeester-toets |
+| 4. Twee zetten vooruit | schaak en pak!, vork en dan pakken, mat in twee (het trappetje), toets |
+| 5. Drie zetten vooruit | het grote trappetje, koningsjacht, slim pakken in drie, toets |
+
+**Vooruit denken (wereld 4 en 5):** Sam doet een zet, zwart zet vanzelf terug, en dan is Sam weer aan de beurt.
+Pim telt mee ("Zet 1 van 3") en vertelt na elke zet van zwart wat er nu moet. Elke les begint met een filmpje
+waarin Pim de hele reeks voordoet en bij elke zet uitlegt wat er gebeurt (met 🔁 Nog eens).
+Een verkeerde zet? Dan laat zwart meteen zien hoe hij ontsnapt, en probeert Sam díe zet opnieuw (niet de hele opdracht).
+Bijna elke reeks begint met schaak: dan MOET zwart eerst zijn koning redden, en dat maakt vooruit denken te doen.
 
 Opdrachtsoorten: sterren pakken, stukken slaan, quizjes en echte stellingen (schaak geven, mat geven,
 rokeren, los stuk pakken, stuk redden, vork maken). Alle teksten zijn kort en simpel: Sam kan net een beetje lezen. Vastgelopen? Met de knop 💡 Hint wijst Pim de goede zet aan.
@@ -60,8 +68,9 @@ een sticker per verslagen familielid en "Kampioen van de familie".
 **Terugkijken met Pim:** na een potje (vanaf 6 zetten) laat Pim één ding zien dat goed ging, en hooguit
 twee momenten om van te leren (een los stuk, een gemiste kans of een gemist schaakmat). Met "Wat was beter?" laat hij de betere zet zien.
 
-**Diploma's:** per afgeronde wereld een feestelijk diploma (vlaggetjes, lint, medaille), plus een Meesterdiploma als alles af is.
-Met naam, poppetje en datum. Printen gaat precies op één A4 liggend.
+**Diploma's:** per afgeronde wereld een feestelijk diploma (vlaggetjes, lint, medaille), plus een Meesterdiploma als wereld 1 t/m 3 af zijn.
+Met naam, poppetje en datum. Printen gaat altijd op één A4, liggend: ook als de printer toch staand print
+(dan draait het diploma vanzelf een kwartslag) en ook als de printer eigen randen aanhoudt (dan schaalt het mee).
 
 **Kleuren:** met 🎨 linksboven kiest Sam zelf de kleuren van het bord (7 stuks) en van de stukken (5 stuks).
 Alles is meteen te kiezen; er hoeft niks verdiend te worden.
@@ -143,6 +152,8 @@ Die controleert met de regels van de app zelf dat:
 
 - elke stelling geldig is (zwart staat bijvoorbeeld niet al schaak);
 - elke opdracht **precies één** goede zet heeft (alleen de uitleg-opdrachten 'zet een stuk naar het midden' mogen er meer hebben);
+- bij de vooruit-denk-opdrachten (2 of 3 zetten) er bij **elke** zet precies één goede zet is, zwart op geen enkele manier kan ontsnappen,
+  en dat de filmpjes kloppen;
 - alle sterren- en sla-opdrachten te doen zijn.
 
 Bovenaan staat een groen vinkje of een rode lijst met wat er niet klopt.

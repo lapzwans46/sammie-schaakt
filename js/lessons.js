@@ -9,6 +9,9 @@
             mark: ['e4', ...] -> vakjes oplichten
             demo: ['e1-g1', ...] -> filmpje: de stukken bewegen vanzelf (met knop 'Nog eens')
             markAfter: [...] -> vakjes die oplichten als het filmpje klaar is
+            demoSay: [...] -> wat Pim zegt bij elke zet van het filmpje
+            demoWin: 'mate' of 'Q'/'R' -> het filmpje is een vooruit-denk-reeks;
+                     de puzzelcontrole kijkt dan of het filmpje klopt
    quiz     Vraag met knoppen. options: [{ label, piece?, ok: true }]
             Met pieces/fen erbij staat er een bordje naast de vraag.
    stars    Pak alle sterren met je stuk(ken).
@@ -23,12 +26,18 @@
                   'safe'      zorg dat geen enkel stuk van jou zomaar te pakken is
                   'fork'      val twee stukken tegelijk aan (vork)
                   'to'        zet een bepaald stuk (piece: 'P') naar een van squares: [...]
+                  'plan'      VOORUIT DENKEN: 2 of 3 zetten achter elkaar.
+                              win: 'mate' (geef schaakmat) of 'Q'/'R' (pak dat zwarte stuk)
+                              line: ['wit', 'zwart', 'wit', ...] de oplossing; zwart zet vanzelf
+                              say: wat Pim zegt na elke zet van zwart
    world: in welke wereld de les hoort (zie WORLDS)
    ========================================================= */
 const WORLDS = [
   { nr: 1, title: 'De stukken', color: '#4a9df8' },
   { nr: 2, title: 'De regels', color: '#ff8c42' },
   { nr: 3, title: 'Slim spelen', color: '#9b5de5' },
+  { nr: 4, title: 'Twee zetten vooruit', color: '#14b8a6' },
+  { nr: 5, title: 'Drie zetten vooruit', color: '#ef476f' },
 ];
 
 const LESSON_START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -266,13 +275,187 @@ const LESSONS = [
   {
     world: 3, id: 'toets', title: 'Schaakmeester-toets', icon: 'wQ',
     steps: [
-      { type: 'talk', text: 'De laatste les! Laat zien wat je kunt. Succes, Sam!', pieces: { d4: 'wN', e4: 'wQ' } },
+      { type: 'talk', text: 'De laatste les van wereld 3! Laat zien wat je kunt. Succes, Sam!', pieces: { d4: 'wN', e4: 'wQ' } },
       { type: 'goal', goal: 'hanging', text: 'Opdracht 1: pak het losse stuk!', fen: '4k3/8/8/3r4/8/8/3R4/4K3 w - - 0 1' },
       { type: 'goal', goal: 'fork', text: 'Opdracht 2: val twee stukken aan met je paard!', fen: '4r1k1/8/8/7N/8/8/8/K7 w - - 0 1' },
       { type: 'goal', goal: 'safe', text: 'Opdracht 3: red je loper!', fen: '6k1/8/8/8/4p3/2P5/5n2/K6B w - - 0 1' },
       { type: 'goal', goal: 'mate', text: 'Opdracht 4: geef schaakmat!', fen: 'k7/1p6/1K6/8/8/8/8/7R w - - 0 1' },
       { type: 'goal', goal: 'mate', text: 'Laatste! Geef schaakmat met je koningin!', fen: '6k1/5ppp/8/8/8/8/8/4Q1K1 w - - 0 1' },
       { type: 'talk', text: 'Wauw! Jij bent nu een echte schaakmeester!', pieces: { c4: 'wK', d4: 'wQ', e4: 'wN' } },
+    ],
+  },
+  /* ---------------- WERELD 4: TWEE ZETTEN VOORUIT ----------------
+     Elke opdracht: wit zet, zwart zet vanzelf terug, wit zet nog een keer.
+     Steeds begint het met SCHAAK: dan MOET zwart eerst zijn koning redden.
+     Elke opdracht heeft precies één goede weg (zie tools/puzzelcontrole.html). */
+  {
+    world: 4, id: 'spies', title: 'Schaak en pak!', icon: 'wR',
+    steps: [
+      { type: 'talk', text: 'Welkom in wereld 4! Hier leer je VOORUIT denken.', pieces: { d4: 'wN' } },
+      { type: 'talk', text: 'Tot nu toe deed je één goede zet. Nu doe je er twee achter elkaar!', pieces: { d4: 'wN' } },
+      { type: 'talk', text: 'Denk zo: ik zet dit. Wat doet zwart dan? En wat zet ik daarna?', pieces: { d4: 'wN' } },
+      { type: 'talk', text: 'Kijk naar het filmpje. Let op de koning én de koningin!', fen: '4q3/8/8/4k3/8/8/8/R5K1 w - - 0 1',
+        demo: ['a1-e1', 'e5-d6', 'e1-e8'], demoWin: 'Q', markAfter: ['e8'],
+        demoSay: ['Zet 1: de toren geeft schaak!', 'Zwart MOET zijn koning redden. Hij loopt weg.', 'Zet 2: hap! De toren pakt de koningin.'] },
+      { type: 'talk', text: 'De koningin stond achter de koning. Zwart kon haar niet meer redden!', fen: '4q3/8/8/4k3/8/8/8/4R1K1 b - - 0 1', mark: ['e5', 'e8'] },
+      { type: 'quiz', text: 'Schaak! Wat MOET zwart nu doen?', fen: '4q3/8/8/4k3/8/8/8/4R1K1 b - - 0 1',
+        options: [{ label: 'Zijn koning redden', piece: 'bK', ok: true }, { label: 'Zijn koningin redden', piece: 'bQ' }] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Nu jij! Geef schaak met je toren. Pak dan de koningin.',
+        fen: '4k1q1/1R6/8/8/8/8/8/2K5 w - - 0 1', line: ['b7-b8', 'e8-d7', 'b8-g8'], say: ['De koning loopt weg. Pak nu de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Geef schaak. Wat staat er achter de koning?',
+        fen: '8/2R5/8/7k/7q/8/8/K7 w - - 0 1', line: ['c7-h7', 'h5-g6', 'h7-h4'], say: ['De koning is weg. Pak nu de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Nog een keer! Schaak, en dan pakken.',
+        fen: '6R1/8/8/7k/8/8/1K6/7q w - - 0 1', line: ['g8-h8', 'h5-g6', 'h8-h1'], say: ['Goed zo! Pak nu de koningin!'] },
+      { type: 'talk', text: 'De loper kan het ook. Hij doet het schuin!', pieces: { d4: 'wB' }, showMoves: 'd4' },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Geef schaak met je loper. Pak dan de koningin!',
+        fen: '6q1/8/4k3/8/8/8/2B5/K7 w - - 0 1', line: ['c2-b3', 'e6-d7', 'b3-g8'], say: ['De koning loopt weg. Pak nu de koningin!'] },
+    ],
+  },
+  {
+    world: 4, id: 'vork2', title: 'Vork, en dan pakken', icon: 'wN',
+    steps: [
+      { type: 'talk', text: 'Weet je nog, de VORK? Nu pak je ook echt een stuk!', pieces: { d4: 'wN' }, showMoves: 'd4' },
+      { type: 'talk', text: 'Kijk naar het filmpje!', fen: '8/k7/8/q3N3/8/8/2K5/8 w - - 0 1',
+        demo: ['e5-c6', 'a7-a8', 'c6-a5'], demoWin: 'Q', markAfter: ['a5'],
+        demoSay: ['Zet 1: het paard springt. Schaak! En de koningin wordt ook aangevallen.', 'Zwart moet eerst zijn koning redden.', 'Zet 2: nu pakt het paard de koningin!'] },
+      { type: 'talk', text: 'Schaak is de truc! Dan MOET zwart eerst zijn koning redden.', fen: '8/k7/2N5/q7/8/8/2K5/8 b - - 0 1', showMoves: 'c6' },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Zoek de vork met schaak. Pak dan de koningin!',
+        fen: '4k3/1N6/8/5q2/8/8/8/4K3 w - - 0 1', line: ['b7-d6', 'e8-d8', 'd6-f5'], say: ['Zwart redt zijn koning. Pak nu de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Nog een vork! Waar springt het paard heen?',
+        fen: '6q1/8/8/7k/6N1/8/8/2K5 w - - 0 1', line: ['g4-f6', 'h5-g6', 'f6-g8'], say: ['Hap hap! Pak nu de koningin!'] },
+      { type: 'talk', text: 'De koningin kan ook een vork maken. Ze gaat recht én schuin!', pieces: { d4: 'wQ' }, showMoves: 'd4' },
+      { type: 'goal', goal: 'plan', win: 'R', text: 'Geef schaak met je koningin. Pak dan de toren!',
+        fen: '6k1/2r5/8/8/3Q4/8/3K4/8 w - - 0 1', line: ['d4-d8', 'g8-f7', 'd8-c7'], say: ['Mooi! Pak nu de toren!'] },
+      { type: 'goal', goal: 'plan', win: 'R', text: 'Nog een keer! Schaak, en val ook de toren aan.',
+        fen: '5k2/8/1K6/8/3r4/8/8/7Q w - - 0 1', line: ['h1-h8', 'f8-e7', 'h8-d4'], say: ['Goed! Pak nu de toren!'] },
+    ],
+  },
+  {
+    world: 4, id: 'mat2', title: 'Mat in twee', icon: 'bK',
+    steps: [
+      { type: 'talk', text: 'Soms lukt schaakmat niet in één zet. Dan heb je twee zetten nodig.', fen: '8/5k2/R7/1R6/8/8/8/2K5 w - - 0 1' },
+      { type: 'talk', text: 'Kijk hoe twee torens samenwerken!', fen: '8/5k2/R7/1R6/8/8/8/2K5 w - - 0 1',
+        demo: ['b5-b7', 'f7-e8', 'a6-a8'], demoWin: 'mate', markAfter: ['e8'],
+        demoSay: ['Zet 1: de toren geeft schaak. Nu is deze rij dicht.', 'De koning moet naar de achterste rij.', 'Zet 2: de andere toren geeft schaakmat!'] },
+      { type: 'talk', text: 'Dat heet het TRAPPETJE. De ene toren houdt een rij dicht. De andere geeft schaak.', fen: '8/1R3k2/R7/8/8/8/8/2K5 b - - 0 1', mark: ['a6', 'b7'] },
+      { type: 'quiz', text: 'Waarom kan de koning niet naar voren?', fen: '8/1R3k2/R7/8/8/8/8/2K5 b - - 0 1',
+        options: [{ label: 'De toren houdt die rij dicht', piece: 'wR', ok: true }, { label: 'De koning is moe', piece: 'bK' }] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Maak het trappetje! Geef schaak. Geef dan schaakmat.',
+        fen: '8/2k5/7R/8/8/K7/8/6R1 w - - 0 1', line: ['g1-g7', 'c7-b8', 'h6-h8'], say: ['De koning moet naar achteren. Geef nu schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Nog een trappetje! Welke toren gaat eerst?',
+        fen: '4R3/1k6/7R/8/8/8/6K1/8 w - - 0 1', line: ['e8-e7', 'b7-a8', 'h6-h8'], say: ['Goed! Geef nu schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Duw de koning in de hoek. Geef dan schaakmat!',
+        fen: '6k1/8/8/5R2/8/8/2K4R/8 w - - 0 1', line: ['h2-g2', 'g8-h8', 'f5-h5'], say: ['De koning zit in de hoek. Geef nu schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Nog een keer naar de hoek. Twee zetten!',
+        fen: '8/1k6/8/3K4/8/2R5/8/5R2 w - - 0 1', line: ['f1-b1', 'b7-a8', 'c3-a3'], say: ['De koning zit vast. Geef nu schaakmat!'] },
+    ],
+  },
+  {
+    world: 4, id: 'toets2', title: 'Toets: twee zetten', icon: 'wQ',
+    steps: [
+      { type: 'talk', text: 'Laat zien wat je kunt! Elke opdracht heeft twee zetten. Denk goed vooruit!', pieces: { d4: 'wN', e4: 'wQ' } },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Opdracht 1: pak de koningin!',
+        fen: '3kq3/8/8/8/8/8/1R6/1K6 w - - 0 1', line: ['b2-b8', 'd8-c7', 'b8-e8'], say: ['Goed! En nu?'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Opdracht 2: pak de koningin met je paard!',
+        fen: '3N4/8/4K3/k7/3q4/8/8/8 w - - 0 1', line: ['d8-c6', 'a5-a6', 'c6-d4'], say: ['Goed! En nu?'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Opdracht 3: geef schaakmat in twee zetten!',
+        fen: '8/3k4/R7/8/8/7R/8/1K6 w - - 0 1', line: ['h3-h7', 'd7-c8', 'a6-a8'], say: ['Goed! En nu?'] },
+      { type: 'goal', goal: 'plan', win: 'R', text: 'Opdracht 4: pak de toren met je loper!',
+        fen: '8/8/1r6/6B1/4K3/8/8/6k1 w - - 0 1', line: ['g5-e3', 'g1-g2', 'e3-b6'], say: ['Goed! En nu?'] },
+      { type: 'goal', goal: 'plan', win: 'R', text: 'Laatste! Pak de toren met je koningin.',
+        fen: '7Q/8/k2K4/8/8/8/r7/8 w - - 0 1', line: ['h8-a8', 'a6-b6', 'a8-a2'], say: ['Goed! En nu?'] },
+      { type: 'talk', text: 'Super! Jij kunt twee zetten vooruit denken!', pieces: { c4: 'wK', d4: 'wQ', e4: 'wN' } },
+    ],
+  },
+  /* ---------------- WERELD 5: DRIE ZETTEN VOORUIT ---------------- */
+  {
+    world: 5, id: 'trap3', title: 'Het grote trappetje', icon: 'wR',
+    steps: [
+      { type: 'talk', text: 'Welkom in wereld 5! Nu denk je DRIE zetten vooruit.', pieces: { d4: 'wN' } },
+      { type: 'talk', text: 'Dat is best moeilijk. Maar met een slim plan lukt het!', pieces: { d4: 'wN', e4: 'wR' } },
+      { type: 'talk', text: 'Kijk: het trappetje, maar nu langer!', fen: '8/5k2/8/K7/8/4R3/6R1/8 w - - 0 1',
+        demo: ['g2-f2', 'f7-g7', 'e3-g3', 'g7-h8', 'f2-h2'], demoWin: 'mate', markAfter: ['h8'],
+        demoSay: ['Zet 1: schaak! De koning moet opzij.', 'Hij loopt naar g7.', 'Zet 2: weer schaak, met de andere toren!', 'De koning vlucht de hoek in.', 'Zet 3: schaakmat!'] },
+      { type: 'talk', text: 'Zie je het? De torens geven om de beurt schaak. De koning wordt steeds verder geduwd.', fen: '7k/8/8/K7/8/6R1/7R/8 b - - 0 1', mark: ['g3', 'h2'] },
+      { type: 'quiz', text: 'Wat doen de torens bij het trappetje?',
+        options: [{ label: 'Om de beurt schaak geven', piece: 'wR', ok: true }, { label: 'Zomaar ergens staan', piece: 'wP' }] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Geef drie keer schaak. De laatste is schaakmat!',
+        fen: '8/2k5/8/8/8/3R4/5R2/K7 w - - 0 1', line: ['f2-c2', 'c7-b7', 'd3-b3', 'b7-a8', 'c2-a2'],
+        say: ['Goed! Nu de andere toren!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Nog een groot trappetje! Begin met schaak.',
+        fen: '5k2/8/8/K7/8/7R/8/4R3 w - - 0 1', line: ['h3-f3', 'f8-g7', 'e1-g1', 'g7-h8', 'f3-h3'],
+        say: ['Goed! Nu de andere toren!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Duw de koning naar de hoek. Drie zetten!',
+        fen: '2k5/8/8/8/5K2/1R6/3R4/8 w - - 0 1', line: ['b3-c3', 'c8-b7', 'd2-b2', 'b7-a8', 'c3-a3'],
+        say: ['Goed! Nu de andere toren!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'De laatste van deze les. Jij kunt het!',
+        fen: '5k2/8/8/8/K6R/8/4R3/8 w - - 0 1', line: ['h4-f4', 'f8-g7', 'e2-g2', 'g7-h8', 'f4-h4'],
+        say: ['Goed! Nu de andere toren!', 'Nog één zet. Geef schaakmat!'] },
+    ],
+  },
+  {
+    world: 5, id: 'jacht', title: 'Koningsjacht', icon: 'bK',
+    steps: [
+      { type: 'talk', text: 'De koningin en de toren gaan samen op jacht!', pieces: { c4: 'wQ', e4: 'wR' } },
+      { type: 'talk', text: 'Kijk goed. Ze helpen elkaar!', fen: '8/1R6/7k/8/1Q6/8/8/1K6 w - - 0 1',
+        demo: ['b4-f8', 'h6-g6', 'b7-g7', 'g6-h6', 'f8-h8'], demoWin: 'mate', markAfter: ['h6'],
+        demoSay: ['Zet 1: de koningin geeft schaak.', 'De koning stapt opzij.', 'Zet 2: de toren geeft schaak. De koningin beschermt hem!', 'De koning gaat terug.', 'Zet 3: schaakmat!'] },
+      { type: 'talk', text: 'Slim: zwart kan de toren niet pakken. De koningin past op hem!', fen: '5Q2/6R1/6k1/8/8/8/8/1K6 b - - 0 1', mark: ['f8', 'g7'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Doe het filmpje na! Drie zetten.',
+        fen: '8/3R4/7k/8/1Q6/8/8/7K w - - 0 1', line: ['b4-f8', 'h6-g6', 'd7-g7', 'g6-h6', 'f8-h8'],
+        say: ['Goed! Nu de toren, met hulp van de koningin!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Ga op jacht! Begin met de koningin.',
+        fen: '5K2/4R3/k7/8/6Q1/8/8/8 w - - 0 1', line: ['g4-c8', 'a6-b6', 'e7-b7', 'b6-a6', 'c8-a8'],
+        say: ['Goed! Nu de toren, met hulp van de koningin!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Nu begint de toren. Drie keer schaak!',
+        fen: '8/3Q4/8/6R1/8/6K1/8/2k5 w - - 0 1', line: ['g5-c5', 'c1-b2', 'd7-b7', 'b2-a3', 'c5-a5'],
+        say: ['Goed! Nu de koningin!', 'Nog één zet. Geef schaakmat!'] },
+      { type: 'talk', text: 'De loper kan de koningin ook helpen!', pieces: { c4: 'wQ', e4: 'wB' } },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Koningin en loper op jacht. Drie zetten!',
+        fen: 'k7/8/6B1/8/6Q1/7K/8/8 w - - 0 1', line: ['g4-c8', 'a8-a7', 'c8-c7', 'a7-a8', 'g6-e4'],
+        say: ['Goed! Nog een keer schaak!', 'Nu mag de loper. Geef schaakmat!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Nog een jacht met de loper!',
+        fen: '5k2/8/8/4Q3/K7/8/3B4/8 w - - 0 1', line: ['e5-f6', 'f8-e8', 'f6-e6', 'e8-d8', 'd2-a5'],
+        say: ['Goed! Nog een keer schaak!', 'Nu mag de loper. Geef schaakmat!'] },
+    ],
+  },
+  {
+    world: 5, id: 'slim3', title: 'Slim pakken in drie', icon: 'bQ',
+    steps: [
+      { type: 'talk', text: 'Je kunt ook in drie zetten een stuk winnen. Schaak, schaak... en hap!', pieces: { c4: 'wR', e4: 'wN' } },
+      { type: 'talk', text: 'Kijk naar het filmpje!', fen: '5q2/k7/3N4/K7/2R5/8/8/8 w - - 0 1',
+        demo: ['c4-c7', 'a7-a8', 'c7-c8', 'a8-a7', 'c8-f8'], demoWin: 'Q', markAfter: ['f8'],
+        demoSay: ['Zet 1: schaak met de toren.', 'De koning gaat naar de hoek.', 'Zet 2: weer schaak! Het paard beschermt de toren.', 'De koning moet terug.', 'Zet 3: hap! De koningin is van jou.'] },
+      { type: 'talk', text: 'Elke keer schaak. Zo krijgt zwart nooit tijd om zijn koningin te redden!', fen: '2R2q2/k7/3N4/K7/8/8/8/8 b - - 0 1', mark: ['c8', 'f8'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Schaak, schaak... en pak de koningin!',
+        fen: '7k/7q/1N6/6K1/8/2R5/8/8 w - - 0 1', line: ['c3-c8', 'h8-g7', 'c8-c7', 'g7-f8', 'c7-h7'],
+        say: ['Goed! Nog een keer schaak!', 'Nu kan het. Pak de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Eerst de toren, dan een vork met het paard!',
+        fen: '5N2/8/7k/6q1/8/R7/K7/8 w - - 0 1', line: ['a3-h3', 'h6-g7', 'f8-e6', 'g7-g8', 'e6-g5'],
+        say: ['Goed! Nu een vork met het paard!', 'Nu kan het. Pak de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Eerst het paard, dan de toren. Pak de koningin!',
+        fen: '2k2q2/8/2K5/1N6/8/8/8/4R3 w - - 0 1', line: ['b5-d6', 'c8-b8', 'e1-e8', 'b8-a7', 'e8-f8'],
+        say: ['Goed! Nu de toren!', 'Nu kan het. Pak de koningin!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Met je koningin! De loper helpt.',
+        fen: '7k/q7/8/8/5B2/8/1K2Q3/8 w - - 0 1', line: ['e2-e5', 'h8-g8', 'e5-b8', 'g8-f7', 'b8-a7'],
+        say: ['Goed! Nog een keer schaak!', 'Nu kan het. Pak de koningin!'] },
+    ],
+  },
+  {
+    world: 5, id: 'toets3', title: 'Toets: drie zetten', icon: 'wK',
+    steps: [
+      { type: 'talk', text: 'De grote toets! Elke opdracht heeft drie zetten. Neem rustig de tijd.', pieces: { c4: 'wK', d4: 'wQ', e4: 'wR' } },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Opdracht 1: geef schaakmat in drie zetten!',
+        fen: '8/5k2/8/K7/8/4R3/3R4/8 w - - 0 1', line: ['d2-f2', 'f7-g7', 'e3-g3', 'g7-h8', 'f2-h2'], say: ['Goed! En nu?', 'Nog één zet!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Opdracht 2: pak de koningin!',
+        fen: '8/7R/2N5/5q2/8/8/k7/2K5 w - - 0 1', line: ['h7-a7', 'a2-b3', 'c6-d4', 'b3-b4', 'd4-f5'], say: ['Goed! En nu?', 'Nog één zet!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Opdracht 3: koningin en toren. Geef schaakmat!',
+        fen: '8/3Q2R1/7K/8/8/8/8/5k2 w - - 0 1', line: ['d7-h3', 'f1-e2', 'g7-g2', 'e2-d1', 'h3-h1'], say: ['Goed! En nu?', 'Nog één zet!'] },
+      { type: 'goal', goal: 'plan', win: 'mate', text: 'Opdracht 4: koningin en loper. Geef schaakmat!',
+        fen: '1k6/8/8/4K3/1B6/8/5Q2/8 w - - 0 1', line: ['f2-b6', 'b8-a8', 'b6-a6', 'a8-b8', 'b4-d6'], say: ['Goed! En nu?', 'Nog één zet!'] },
+      { type: 'goal', goal: 'plan', win: 'Q', text: 'Laatste! Pak de koningin met je paard.',
+        fen: 'k1K5/8/N7/8/3q4/8/8/7R w - - 0 1', line: ['a6-c7', 'a8-a7', 'c7-b5', 'a7-a8', 'b5-d4'], say: ['Goed! En nu?', 'Nog één zet!'] },
+      { type: 'talk', text: 'Wauw! Jij denkt drie zetten vooruit. Jij bent een echte denker!', pieces: { c4: 'wK', d4: 'wQ', e4: 'wN' } },
     ],
   },
 ];

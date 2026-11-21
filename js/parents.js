@@ -82,6 +82,7 @@ const SKILL_INFO = {
   safe: ['Eigen stukken redden', 'Vraag voor elke zet: "Kan de ander iets van mij pakken?"'],
   fork: ['Vork maken', 'Zoek samen vakjes waar het paard twee stukken tegelijk raakt.'],
   to: ['Goede openingszetten', 'Pionnen naar het midden, dan paarden en lopers eruit, dan rokeren.'],
+  plan: ['Vooruit denken', 'Vraag bij elke zet: "En wat doet de ander dan?" Zet het samen op een echt bord en speel het na.'],
 };
 
 function readProfileData(id) {
@@ -100,7 +101,7 @@ function Overview(pid) {
   const dailyCount = ((d.daily || {}).days || []).length;
 
   // vaardigheden in lesvolgorde
-  const order = ['stars', 'capture', 'quiz', 'check', 'escape', 'mate', 'castle', 'hanging', 'safe', 'fork', 'to'];
+  const order = ['stars', 'capture', 'quiz', 'check', 'escape', 'mate', 'castle', 'hanging', 'safe', 'fork', 'to', 'plan'];
   const skills = order.filter((k) => stats.skills[k] && stats.skills[k].n > 0)
     .map((k) => ({ k, n: stats.skills[k].n, first: stats.skills[k].first, rate: stats.skills[k].first / stats.skills[k].n }));
   const weakest = skills.filter((x) => x.n >= 3 && x.k !== 'stars').sort((a, b) => a.rate - b.rate).slice(0, 2).filter((x) => x.rate < 0.75);

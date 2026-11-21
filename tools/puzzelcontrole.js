@@ -34,6 +34,41 @@
     return { ok: true, msg: (sols.length > 1 ? `${sols.length} goede zetten (mag hier): ` : 'Eén oplossing: ') + list };
   }
 
+  /* Vooruit denken (goal 'plan', of een filmpje met demoWin):
+     - bij ELKE zet van wit is er precies één goede zet, en dat is de zet uit de oplossing
+       (een goede zet = wint, wat zwart daarna ook doet);
+     - wit is niet eerder klaar dan bedoeld;
+     - de zet van zwart is een geldige zet, en zwart verliest daarmee niet sneller;
+     - bij een pak-opdracht staat het stuk na het pakken veilig. */
+  function checkPlan(fen, line, win, say) {
+    const bad = problemsWithPosition({ fen, goal: 'plan' });
+    if (bad.length) return { ok: false, msg: 'Ongeldig: ' + bad.join(', ') };
+    if (!line || line.length % 2 !== 1) return { ok: false, msg: 'line moet wit-zwart-wit... zijn (oneven aantal)' };
+    const n = (line.length + 1) / 2;
+    if (say && say.length < n - 1) return { ok: false, msg: `say heeft ${say.length} zinnen, nodig: ${n - 1}` };
+    let s = Chess.fromFEN(fen);
+    for (let k = 0; k < n; k++) {
+      const left = n - k;
+      const sols = Plan.solutions(s, left, win);
+      const names = sols.map(Plan.moveStr).join(' ');
+      if (sols.length !== 1) return { ok: false, msg: `zet ${k + 1}: ${sols.length} goede zetten (${names || 'geen'})` };
+      if (Plan.moveStr(sols[0]) !== line[2 * k]) return { ok: false, msg: `zet ${k + 1}: de goede zet is ${names}, niet ${line[2 * k]}` };
+      const m = sols[0];
+      if (left > 1 && Plan.wins(s, m, win)) return { ok: false, msg: `zet ${k + 1} is al meteen raak` };
+      const s2 = Chess.makeMove(s, m);
+      if (left === 1) {
+        if (!Plan.wins(s, m, win)) return { ok: false, msg: 'laatste zet is niet raak' };
+        if (win !== 'mate' && Chess.gameStatus(s2) !== 'checkmate' && Chess.isAttacked(s2.board, m.to, 'b')) return { ok: false, msg: 'na het pakken kan zwart terugpakken' };
+        break;
+      }
+      const r = Plan.find(s2, line[2 * k + 1]);
+      if (!r) return { ok: false, msg: `zwart kan ${line[2 * k + 1]} niet zetten` };
+      s = Chess.makeMove(s2, r);
+      if (left - 2 >= 1 && Plan.forced(s, left - 2, win)) return { ok: false, msg: `zwart ${line[2 * k + 1]} verliest sneller: kies een beter antwoord` };
+    }
+    return { ok: true, msg: 'Eén weg: ' + line.join(' ') };
+  }
+
   function checkFree(st) {
     const s = st.fen ? Chess.fromFEN(st.fen) : Chess.fromPieces(st.pieces, 'w');
     const f = freeSolution(st.type, s, (st.stars || []).map(Chess.sqIndex));
@@ -43,9 +78,11 @@
   const rows = [];
   LESSONS.forEach((l, li) => l.steps.forEach((st, si) => {
     let r = null;
-    if (st.type === 'goal') r = checkGoal(st);
+    if (st.type === 'goal' && st.goal === 'plan') r = checkPlan(st.fen, st.line, st.win, st.say);
+    else if (st.type === 'goal') r = checkGoal(st);
+    else if (st.type === 'talk' && st.demoWin) r = checkPlan(st.fen, st.demo, st.demoWin, null);
     else if (st.type === 'stars' || st.type === 'capture') r = checkFree(st);
-    if (r) rows.push({ where: `Les ${li + 1} (${l.title}), stap ${si + 1}`, kind: st.goal || st.type, text: st.text, ...r });
+    if (r) rows.push({ where: `Les ${li + 1} (${l.title}), stap ${si + 1}`, kind: st.demoWin ? 'filmpje' : (st.goal === 'plan' ? `plan-${st.win}` : st.goal || st.type), text: st.text, ...r });
   }));
   PUZZLES.forEach((p, i) => rows.push({ where: `Puzzel ${i + 1}`, kind: p.goal, text: p.text, ...checkGoal(p) }));
 

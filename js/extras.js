@@ -550,14 +550,28 @@ function Review(info) {
 /* ---------------------------------------------------------
    DIPLOMA'S
    --------------------------------------------------------- */
+/* Het Meesterdiploma hoort bij de basis (wereld 1 t/m 3). Daarna komen de werelden
+   'vooruit denken' (4 en 5), elk met een eigen diploma. */
+const MASTER_WORLDS = [1, 2, 3];
 function diplomaList() {
-  return WORLDS.map((w) => ({ key: w.nr, title: `Wereld ${w.nr}: ${w.title}`, world: w, color: w.color, done: worldDone(w.nr) }))
-    .concat([{ key: 4, title: 'Schaakmeester', color: '#e8a400', done: WORLDS.every((w) => worldDone(w.nr)), grand: true }]);
+  const w = (x) => ({ key: x.nr, title: `Wereld ${x.nr}: ${x.title}`, world: x, color: x.color, done: worldDone(x.nr) });
+  const basis = WORLDS.filter((x) => MASTER_WORLDS.includes(x.nr));
+  const rest = WORLDS.filter((x) => !MASTER_WORLDS.includes(x.nr));
+  return basis.map(w)
+    .concat([{ key: 'meester', title: 'Schaakmeester', color: '#e8a400', done: MASTER_WORLDS.every(worldDone), grand: true }])
+    .concat(rest.map(w));
 }
 
 /* Geeft de diploma's terug die nu net verdiend zijn */
 function checkDiplomas() {
   const d = Store.data.diplomas;
+  // Vroeger had het Meesterdiploma nummer 4. Nu is 4 een wereld: één keer omzetten.
+  if (!Store.data.dipV) {
+    if (d[4] && !d.meester) d.meester = d[4];
+    delete d[4];
+    Store.data.dipV = 2;
+    Store.save();
+  }
   const fresh = [];
   diplomaList().forEach((x) => {
     if (x.done && !d[x.key]) { d[x.key] = todayStr(); fresh.push(x.key); }
@@ -576,7 +590,7 @@ function Diplomas() {
     <p class="choose-sub">Maak een wereld af. Dan krijg je een diploma!</p>
     <div class="dip-grid">
       ${list.map((x) => {
-        const lessons = x.grand ? LESSONS : LESSONS.filter((l) => l.world === x.key);
+        const lessons = LESSONS.filter((l) => (x.grand ? MASTER_WORLDS.includes(l.world) : l.world === x.key));
         const done = lessons.filter((l) => Store.data.lessons[l.id]).length;
         return `<button class="dip-card ${x.done ? 'got' : ''}" data-k="${x.key}" style="--dc:${x.color}">
           <div class="dip-icon">${x.done ? '🎓' : '📜'}</div>
@@ -589,7 +603,7 @@ function Diplomas() {
   $('#back').onclick = () => go(Home);
   app.querySelectorAll('.dip-card').forEach((b) => {
     b.onclick = () => {
-      const x = list.find((y) => y.key === +b.dataset.k);
+      const x = list.find((y) => String(y.key) === b.dataset.k);
       if (!x.done) {
         Sound.play('oops');
         b.classList.remove('shake'); b.getBoundingClientRect(); b.classList.add('shake');
@@ -624,7 +638,7 @@ function DiplomaView(key) {
   const nice = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
   const lessons = x.grand ? [] : LESSONS.filter((l) => l.world === key);
   const what = x.grand
-    ? 'heeft <b>alle lessen</b> van Sammie Schaakt! gehaald.<br>Jij bent nu een echte <b>schaakmeester</b>!'
+    ? 'heeft <b>alle lessen</b> van wereld 1, 2 en 3 gehaald.<br>Jij bent nu een echte <b>schaakmeester</b>!'
     : `heeft <b>wereld ${key}: ${x.world.title}</b> helemaal gehaald!`;
   const flagColors = ['#ff5d8f', '#ffd34d', '#4cc9f0', '#7bd389', '#9b5de5', '#ff8c42'];
   const flags = Array.from({ length: 18 }, (_, i) => `<i style="background:${flagColors[i % flagColors.length]}"></i>`).join('');
@@ -637,7 +651,7 @@ function DiplomaView(key) {
       <div class="title">Jouw diploma</div>
       <button class="btn yellow" id="print">🖨️ Printen</button>
     </div>
-    <p class="print-tip no-print">Tip voor het printen: kies <b>liggend</b> en <b>A4</b>.</p>
+    <p class="print-tip no-print">Tip voor het printen: kies <b>A4</b>. Het diploma past altijd op één blad.</p>
     <div class="diploma" style="--dc:${x.color}">
       <div class="dip-inner">
         <div class="dip-bunting">${flags}</div>

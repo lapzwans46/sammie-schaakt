@@ -496,6 +496,49 @@ const GOALS = {
   },
 };
 
+/* =========================================================
+   VOORUIT DENKEN: opdrachten van 2 of 3 zetten (goal: 'plan')
+   step.win   'mate' = geef schaakmat, of 'Q'/'R'/... = pak dat zwarte stuk
+   step.line  ['h1-h8', 'g8-g7', 'h8-a8', ...]: wit, zwart, wit, ... (zwart zet vanzelf)
+   step.say   wat Pim zegt na elke zet van zwart
+   Schaakmat telt bij een pak-opdracht ook als goed (dat is nog beter).
+   ========================================================= */
+const Plan = {
+  moveStr: (m) => Chess.sqName(m.from) + '-' + Chess.sqName(m.to),
+  /* is de opdracht met deze zet (in stelling s) meteen gelukt? */
+  wins(s, m, win) {
+    if (win !== 'mate' && m.captured === 'b' + win) return true;
+    const n = Chess.makeMove(s, m);
+    // schaakmat kan alleen met schaak: die snelle test eerst
+    return Chess.inCheck(n, 'b') && Chess.gameStatus(n) === 'checkmate';
+  },
+  /* kan wit (aan zet) het in hooguit n zetten afdwingen, wat zwart ook doet?
+     Schaakzetten eerst proberen: die werken het vaakst, dus dan zijn we sneller klaar. */
+  forced(s, n, win) {
+    const ms = qMoves(Chess.legalMoves(s));
+    if (n > 1) ms.sort((a, b) => Plan.isCheck(s, b) - Plan.isCheck(s, a));
+    return ms.some((m) => Plan.good(s, m, n, win));
+  },
+  isCheck: (s, m) => (Chess.inCheck(Chess.makeMove(s, m), 'b') ? 1 : 0),
+  good(s, m, n, win) {
+    if (Plan.wins(s, m, win)) return true;
+    if (n <= 1) return false;
+    const s2 = Chess.makeMove(s, m);
+    const replies = qMoves(Chess.legalMoves(s2));
+    if (!replies.length) return false; // pat
+    return replies.every((r) => Plan.forced(Chess.makeMove(s2, r), n - 1, win));
+  },
+  /* alle goede zetten voor wit, met nog n zetten te gaan */
+  solutions(s, n, win) { return qMoves(Chess.legalMoves(s)).filter((m) => Plan.good(s, m, n, win)); },
+  /* na een foute zet van wit: een zet van zwart waarmee hij ontsnapt */
+  refute(s2, nLeft, win) {
+    const replies = qMoves(Chess.legalMoves(s2));
+    if (!replies.length) return null;
+    return replies.find((r) => nLeft <= 0 || !Plan.forced(Chess.makeMove(s2, r), nLeft, win)) || null;
+  },
+  find(s, str) { return qMoves(Chess.legalMoves(s)).find((m) => Plan.moveStr(m) === str) || null; },
+};
+
 /* Zoek een goede oplossing (voor de hulp na twee keer fout) */
 function findSolution(step) {
   const s = Chess.fromFEN(step.fen);
@@ -544,6 +587,15 @@ function Exercise(step, ui) {
   let wrongCount = 0;
   let usedHint = false;
   const task = ui.taskText || step.text;
+  /* vooruit denken: welke zet uit step.line is nu aan de beurt, en de stelling op dat moment */
+  const isPlan = step.goal === 'plan';
+  const planN = isPlan ? (step.line.length + 1) / 2 : 1;
+  let pi = 0, planStart = null;
+  const planText = () => {
+    const k = pi / 2;
+    return `Zet ${k + 1} van ${planN}: ` + (k === 0 ? task : (step.say && step.say[k - 1]) || 'Nu jij weer!');
+  };
+  const taskNow = () => (isPlan ? planText() : task);
 
   /* eigen timers: 'Opnieuw' zet ze allemaal stop */
   const elaterIds = [];
@@ -555,6 +607,15 @@ function Exercise(step, ui) {
     state = step.fen ? Chess.fromFEN(step.fen) : Chess.fromPieces(step.pieces, 'w');
     stars = new Set((step.stars || []).map(Chess.sqIndex));
     selected = null; dests = []; last = null; locked = false; marks = [];
+    pi = 0; planStart = state;
+    draw();
+  };
+  /* vooruit denken: terug naar het begin van deze zet (niet van de hele opdracht) */
+  const planBack = () => {
+    elaterStop();
+    state = planStart;
+    selected = null; dests = []; locked = false; marks = []; hint = null;
+    last = null;
     draw();
   };
   const checkSq = () => (Chess.inCheck(state, state.turn) ? Chess.findKing(state.board, state.turn) : null);
@@ -563,13 +624,14 @@ function Exercise(step, ui) {
   });
 
   ui.actions.innerHTML = `<button class="btn grey" id="again">↺ Opnieuw</button><button class="btn yellow" id="hintBtn">💡 Hint</button>`;
-  $('#again', ui.actions).onclick = () => { Sound.play('tap'); reset(); ui.setText(task); };
+  $('#again', ui.actions).onclick = () => { Sound.play('tap'); reset(); ui.setText(taskNow()); };
   $('#hintBtn', ui.actions).onclick = () => showHint();
 
   /* Pim helpt alleen als je zelf op 'Hint' drukt */
   function showHint() {
     if (locked) return;
-    const sol = freeMode ? freeSolution(step.type, state, stars) : findSolution(step);
+    const sol = freeMode ? freeSolution(step.type, state, stars)
+      : isPlan ? Plan.find(state, step.line[pi]) : findSolution(step);
     if (!sol) return;
     Sound.play('magic');
     usedHint = true;
@@ -637,6 +699,7 @@ function Exercise(step, ui) {
     draw({ from: m.from, to: m.to });
     if (m.promo) { elater(() => Sound.play('magic'), 250); ui.setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy'); }
 
+    if (isPlan) return planMove(m);
     if (solvedNow(m)) {
       locked = true;
       Stats.skill(step.goal || step.type, wrongCount === 0 && !usedHint);
@@ -661,11 +724,66 @@ function Exercise(step, ui) {
     }
   }
 
+  /* Vooruit denken: is dit de goede zet? Dan zet zwart vanzelf terug.
+     Fout? Dan laat zwart zien hoe hij ontsnapt, en probeer je deze zet opnieuw. */
+  function planMove(m) {
+    locked = true;
+    const nLeft = planN - pi / 2;          // zetten van wit die nog over waren (incl. deze)
+    if (Plan.moveStr(m) === step.line[pi]) {
+      if (pi + 1 >= step.line.length) {     // laatste zet: gelukt!
+        Stats.skill('plan', wrongCount === 0 && !usedHint);
+        elater(() => {
+          Sound.play('good');
+          confetti(50);
+          ui.setText(pick(PRAISE), 'happy');
+          ui.onSolved(wrongCount === 0 && !usedHint);
+        }, 450);
+        return;
+      }
+      elater(() => { Sound.play('good'); ui.setText('Goed zo! Wat doet zwart nu?', 'happy'); }, 350);
+      elater(() => {
+        const r = Plan.find(state, step.line[pi + 1]);
+        state = Chess.makeMove(state, r);
+        last = { from: r.from, to: r.to };
+        Sound.play(r.captured ? 'capture' : 'move');
+        draw({ from: r.from, to: r.to });
+        pi += 2;
+        planStart = state;
+        elater(() => { locked = false; ui.setText(planText()); }, 700);
+      }, 1500);
+      return;
+    }
+    // fout
+    wrongCount++;
+    if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
+    const mated = Chess.gameStatus(state) === 'checkmate';
+    const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
+    const what = step.win === 'mate' ? 'Zo ontsnapt de koning' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
+    elater(() => { Sound.play('oops'); ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops'); }, 400);
+    let t = 400;
+    if (r) {
+      t = 1600;
+      elater(() => {
+        state = Chess.makeMove(state, r);
+        last = { from: r.from, to: r.to };
+        Sound.play(r.captured ? 'capture' : 'move');
+        draw({ from: r.from, to: r.to });
+        ui.setText(`Zie je? ${what}. Denk nog eens vooruit!`, 'oops');
+      }, t);
+    }
+    elater(() => {
+      planBack();
+      ui.setText(wrongCount >= 2 ? planText() + ' Lukt het niet? Druk op 💡.' : planText());
+    }, t + 2600);
+  }
+
   reset();
+  if (isPlan) ui.setText(planText());
 }
 
 /* Pion aan de overkant: kies waarin hij verandert */
 const PROMO_NAME = { Q: 'koningin', R: 'toren', B: 'loper', N: 'paard' };
+const PIECE_NAME_NL = { Q: 'koningin', R: 'toren', B: 'loper', N: 'paard', P: 'pion' };
 function askPromotion(color, onPick) {
   Sound.play('magic');
   const m = modal(`
@@ -811,6 +929,9 @@ function LessonPlayer(li) {
     let s = st;
     view.render(s.board, {});
     const SLOW = 650;
+    // Met demoSay vertelt Pim bij elke zet wat er gebeurt: dan iets langzamer, om te kunnen lezen.
+    const GAP = step.demoSay ? 2800 : 1500;
+    if (step.demoSay) setText(step.text);
     step.demo.forEach((mv, n) => {
       demoTimers.push(later(() => {
         const [a, b] = mv.split('-').map(Chess.sqIndex);
@@ -825,7 +946,8 @@ function LessonPlayer(li) {
         if (m.flag === 'castleK') view.animate(b + 1, b - 1, SLOW + 250);
         if (m.flag === 'castleQ') view.animate(b - 2, b + 1, SLOW + 250);
         Sound.play(m.captured ? 'capture' : 'move');
-      }, 500 + n * 1500));
+        if (step.demoSay && step.demoSay[n]) setText(step.demoSay[n], last ? 'happy' : '');
+      }, (step.demoSay ? 1200 : 500) + n * GAP));
     });
   }
 
