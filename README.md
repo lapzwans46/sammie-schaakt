@@ -29,6 +29,10 @@ Tip: druk op **F11** voor volledig scherm.
 Pim telt mee ("Zet 1 van 3") en vertelt na elke zet van zwart wat er nu moet. Elke les begint met een filmpje
 waarin Pim de hele reeks voordoet en bij elke zet uitlegt wat er gebeurt (met 🔁 Nog eens).
 Een verkeerde zet? Dan laat zwart meteen zien hoe hij ontsnapt, en probeert Sam díe zet opnieuw (niet de hele opdracht).
+Een omweg (het lukt ook, maar in meer zetten)? Dan zegt Pim eerlijk: "Dat kan ook, maar het kan sneller!".
+Elke opdracht heeft in **elk scenario** maar één oplossing: ook als zwart iets anders zou terugzetten,
+heeft wit op elk moment precies één goede zet. Bij een paar trappetjes staat daarom een zwarte pion op het bord;
+die zorgt ervoor dat er geen tweede manier is om mat te geven.
 Bijna elke reeks begint met schaak: dan MOET zwart eerst zijn koning redden, en dat maakt vooruit denken te doen.
 
 Opdrachtsoorten: sterren pakken, stukken slaan, quizjes en echte stellingen (schaak geven, mat geven,
@@ -152,7 +156,8 @@ Die controleert met de regels van de app zelf dat:
 
 - elke stelling geldig is (zwart staat bijvoorbeeld niet al schaak);
 - elke opdracht **precies één** goede zet heeft (alleen de uitleg-opdrachten 'zet een stuk naar het midden' mogen er meer hebben);
-- bij de vooruit-denk-opdrachten (2 of 3 zetten) er bij **elke** zet precies één goede zet is, zwart op geen enkele manier kan ontsnappen,
+- bij de vooruit-denk-opdrachten (2 of 3 zetten) er bij **elke** zet precies één goede zet is, ook in alle andere scenario's
+  (als zwart iets anders terugzet), zwart op geen enkele manier kan ontsnappen,
   en dat de filmpjes kloppen;
 - alle sterren- en sla-opdrachten te doen zijn.
 

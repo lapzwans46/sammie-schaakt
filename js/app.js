@@ -756,25 +756,40 @@ function Exercise(step, ui) {
     // fout
     wrongCount++;
     if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
-    const mated = Chess.gameStatus(state) === 'checkmate';
-    const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
-    const what = step.win === 'mate' ? 'Zo ontsnapt de koning' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
-    elater(() => { Sound.play('oops'); ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops'); }, 400);
-    let t = 400;
-    if (r) {
-      t = 1600;
-      elater(() => {
-        state = Chess.makeMove(state, r);
-        last = { from: r.from, to: r.to };
-        Sound.play(r.captured ? 'capture' : 'move');
-        draw({ from: r.from, to: r.to });
-        ui.setText(`Zie je? ${what}. Denk nog eens vooruit!`, 'oops');
-      }, t);
-    }
+    const before = planStart;
+    // Eerst de zet laten zien, dan pas rekenen (dat kan op een iPad even duren)
     elater(() => {
-      planBack();
-      ui.setText(wrongCount >= 2 ? planText() + ' Lukt het niet? Druk op 💡.' : planText());
-    }, t + 2600);
+      Sound.play('oops');
+      // Een omweg: zo lukt het ook, maar in meer zetten. Dat is niet fout, het kan alleen sneller.
+      const omweg = nLeft <= 3 && Plan.good(before, m, nLeft + 1, step.win);
+      if (omweg) {
+        ui.setText(`Dat kan ook, maar dan duurt het langer. Het kan in ${nLeft} ${nLeft === 1 ? 'zet' : 'zetten'}! Zoek de snelste weg.`, 'oops');
+        elater(() => {
+          planBack();
+          ui.setText(wrongCount >= 2 ? planText() + ' Lukt het niet? Druk op 💡.' : planText());
+        }, 3600);
+        return;
+      }
+      const mated = Chess.gameStatus(state) === 'checkmate';
+      const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
+      const what = step.win === 'mate' ? 'Zo ontsnapt de koning' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
+      ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops');
+      let t = 0;
+      if (r) {
+        t = 1200;
+        elater(() => {
+          state = Chess.makeMove(state, r);
+          last = { from: r.from, to: r.to };
+          Sound.play(r.captured ? 'capture' : 'move');
+          draw({ from: r.from, to: r.to });
+          ui.setText(`Zie je? ${what}. Denk nog eens vooruit!`, 'oops');
+        }, t);
+      }
+      elater(() => {
+        planBack();
+        ui.setText(wrongCount >= 2 ? planText() + ' Lukt het niet? Druk op 💡.' : planText());
+      }, t + 2600);
+    }, 400);
   }
 
   reset();

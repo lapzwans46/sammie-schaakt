@@ -39,7 +39,21 @@
        (een goede zet = wint, wat zwart daarna ook doet);
      - wit is niet eerder klaar dan bedoeld;
      - de zet van zwart is een geldige zet, en zwart verliest daarmee niet sneller;
-     - bij een pak-opdracht staat het stuk na het pakken veilig. */
+     - bij een pak-opdracht staat het stuk na het pakken veilig;
+     - ALLE SCENARIO'S: ook als zwart iets anders terugzet dan in de oplossing,
+       heeft wit op elk moment precies één goede zet. */
+  function firstDual(s, k, win, path) {
+    const sols = Plan.solutions(s, k, win);
+    if (sols.length !== 1) return `${path.join(' ') || 'begin'}: ${sols.length} goede zetten (${sols.map(Plan.moveStr).join(' ') || 'geen'})`;
+    const m = sols[0];
+    if (Plan.wins(s, m, win)) return null;
+    const s2 = Chess.makeMove(s, m);
+    for (const r of qMoves(Chess.legalMoves(s2))) {
+      const d = firstDual(Chess.makeMove(s2, r), k - 1, win, path.concat(Plan.moveStr(m), Plan.moveStr(r)));
+      if (d) return d;
+    }
+    return null;
+  }
   function checkPlan(fen, line, win, say) {
     const bad = problemsWithPosition({ fen, goal: 'plan' });
     if (bad.length) return { ok: false, msg: 'Ongeldig: ' + bad.join(', ') };
@@ -66,7 +80,9 @@
       s = Chess.makeMove(s2, r);
       if (left - 2 >= 1 && Plan.forced(s, left - 2, win)) return { ok: false, msg: `zwart ${line[2 * k + 1]} verliest sneller: kies een beter antwoord` };
     }
-    return { ok: true, msg: 'Eén weg: ' + line.join(' ') };
+    const dual = firstDual(Chess.fromFEN(fen), n, win, []);
+    if (dual) return { ok: false, msg: 'Als zwart anders speelt: ' + dual };
+    return { ok: true, msg: 'Eén weg, ook als zwart anders speelt: ' + line.join(' ') };
   }
 
   function checkFree(st) {
