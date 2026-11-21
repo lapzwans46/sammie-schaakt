@@ -213,22 +213,35 @@ button:disabled { opacity: .45; cursor: default; }
 .actions { display: flex; justify-content: center; gap: 12px; min-height: 70px; align-items: center; }
 .stage { display: flex; justify-content: center; align-items: center; }
 
-/* quiz */
-.quiz { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
-.quiz-btn {
-  min-width: 150px; padding: 18px 22px;
-  background: #fff; border-radius: var(--radius);
-  font-size: 1.6rem; font-weight: 900;
-  box-shadow: 0 7px 0 #d9cde6, 0 12px 20px rgba(0, 0, 0, .1);
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+/* quiz: ALLE antwoordknoppen zijn even groot (vaste breedte en hoogte),
+   met of zonder plaatje, met of zonder bordje ernaast. Lange tekst loopt door op een nieuwe regel. */
+.quiz {
+  --qw: 170px; --qh: 160px; --qp: 60px;
+  display: grid; grid-template-columns: repeat(auto-fit, var(--qw)); gap: 16px;
+  justify-content: center; max-width: 600px; width: 100%;
 }
+.quiz-btn {
+  width: var(--qw); height: var(--qh); padding: 10px 12px; box-sizing: border-box;
+  background: #fff; border-radius: var(--radius);
+  font-size: 1.3rem; font-weight: 900; line-height: 1.15; text-align: center;
+  box-shadow: 0 7px 0 #d9cde6, 0 12px 20px rgba(0, 0, 0, .1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  overflow: hidden;
+}
+.quiz-btn, .quiz-btn span { color: var(--ink); }
+.quiz-btn span { overflow-wrap: anywhere; hyphens: auto; }
+.quiz-btn:not(:has(.quiz-piece)) { font-size: 1.6rem; } /* alleen tekst: grotere letters, zelfde knop */
 .quiz-btn:active { transform: translateY(5px); }
-.quiz-piece { width: 90px; height: 90px; }
-.quiz-btn.right { background: #d9ffd9; box-shadow: 0 7px 0 var(--green-d); transform: scale(1.08); }
+.quiz-piece { width: var(--qp); height: var(--qp); flex: none; }
+.quiz-btn.right { background: #d9ffd9; box-shadow: 0 7px 0 var(--green-d); }
 .quiz-btn.wrong { background: #ffe1e1; }
-.quiz.small { gap: 12px; }
-.quiz.small .quiz-btn { min-width: 110px; padding: 12px 18px; font-size: 1.35rem; }
-.quiz.small .quiz-piece { width: 54px; height: 54px; }
+.quiz > .btn { grid-column: 1 / -1; justify-self: center; } /* de 'Verder'-knop na een goed antwoord */
+/* heel laag scherm (telefoon dwars): kleinere knoppen, maar nog steeds allemaal even groot */
+@media (max-height: 500px) {
+  .quiz { --qw: 150px; --qh: 100px; --qp: 32px; gap: 10px; }
+  .quiz-btn { font-size: .95rem; padding: 6px 8px; gap: 3px; }
+  .quiz-btn:not(:has(.quiz-piece)) { font-size: 1.2rem; }
+}
 
 /* ---------- BORD ---------- */
 .board-wrap {
@@ -846,7 +859,9 @@ button.hero-avatar { padding: 0; }
   .teacher-bubble { min-height: 0; }
   .btn.huge { font-size: 1.3rem; padding: 14px 26px; }
   .btn { font-size: 1.1rem; padding: 12px 18px; }
-  .quiz-btn { min-width: 120px; font-size: 1.3rem; }
+  .quiz { --qw: 140px; --qh: 140px; --qp: 48px; gap: 12px; }
+  .quiz-btn { font-size: 1.1rem; }
+  .quiz-btn:not(:has(.quiz-piece)) { font-size: 1.35rem; }
   .world-title { font-size: 1.25rem; }
 
   /* bord opzetten */
