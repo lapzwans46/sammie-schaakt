@@ -510,7 +510,7 @@ const GOALS = {
 /* Kan zwart (aan zet) in één zet schaakmat geven? Geeft die zet terug, of null. */
 function blackMatesIn1(s) {
   if (s.turn !== 'b') return null;
-  return qMoves(Chess.legalMoves(s)).find((r) => {
+  return Chess.legalMoves(s).find((r) => { // ook promoveren tot paard e.d. telt mee
     const n = Chess.makeMove(s, r);
     return Chess.inCheck(n, 'w') && Chess.gameStatus(n) === 'checkmate';
   }) || null;
@@ -529,7 +529,7 @@ const Plan = {
   wins(s, m, win) {
     if (win !== 'mate' && m.captured === 'b' + win) return true;
     const n = Chess.makeMove(s, m);
-    // promoveren: je pion wordt een koningin, en zwart kan haar niet meteen pakken
+    // promoveren: je pion wordt een nieuw stuk (koningin, toren, loper of paard) en zwart kan het niet meteen pakken
     if (win === 'promo' && m.promo && !Chess.isAttacked(n.board, m.to, 'b')) return true;
     // schaakmat kan alleen met schaak: die snelle test eerst
     return Chess.inCheck(n, 'b') && Chess.gameStatus(n) === 'checkmate';
@@ -537,7 +537,7 @@ const Plan = {
   /* kan wit (aan zet) het in hooguit n zetten afdwingen, wat zwart ook doet?
      Schaakzetten eerst proberen: die werken het vaakst, dus dan zijn we sneller klaar. */
   forced(s, n, win) {
-    const ms = qMoves(Chess.legalMoves(s));
+    const ms = Chess.legalMoves(s);
     if (n > 1) ms.sort((a, b) => Plan.isCheck(s, b) - Plan.isCheck(s, a));
     return ms.some((m) => Plan.good(s, m, n, win));
   },
@@ -546,15 +546,22 @@ const Plan = {
     if (Plan.wins(s, m, win)) return true;
     if (n <= 1) return false;
     const s2 = Chess.makeMove(s, m);
-    const replies = qMoves(Chess.legalMoves(s2));
+    const replies = Chess.legalMoves(s2); // ook zwart mag promoveren tot elk stuk
     if (!replies.length) return false; // pat
     return replies.every((r) => Plan.forced(Chess.makeMove(s2, r), n - 1, win));
   },
   /* alle goede zetten voor wit, met nog n zetten te gaan */
-  solutions(s, n, win) { return qMoves(Chess.legalMoves(s)).filter((m) => Plan.good(s, m, n, win)); },
+  /* Promoveren tot verschillende stukken op hetzelfde vakje telt als één zet (een vakje = een zet);
+     de koningin-versie staat voorop. */
+  solutions(s, n, win) {
+    const seen = new Set();
+    return Chess.legalMoves(s).filter((m) => Plan.good(s, m, n, win))
+      .sort((a, b) => (b.promo === 'Q') - (a.promo === 'Q'))
+      .filter((m) => { const k = Plan.moveStr(m); if (seen.has(k)) return false; seen.add(k); return true; });
+  },
   /* na een foute zet van wit: een zet van zwart waarmee hij ontsnapt */
   refute(s2, nLeft, win) {
-    const replies = qMoves(Chess.legalMoves(s2));
+    const replies = Chess.legalMoves(s2);
     if (!replies.length) return null;
     return replies.find((r) => nLeft <= 0 || !Plan.forced(Chess.makeMove(s2, r), nLeft, win)) || null;
   },
@@ -567,7 +574,7 @@ const Plan = {
   /* zwart kiest zelf: het antwoord waarna wit het langst nodig heeft (bij gelijk: liefst de koning) */
   defend(s2, max, win) {
     let best = null, bestD = -1;
-    for (const r of qMoves(Chess.legalMoves(s2))) {
+    for (const r of Chess.legalMoves(s2)) {
       const d = Plan.distance(Chess.makeMove(s2, r), max, win);
       if (d > bestD || (d === bestD && r.piece[1] === 'K' && best.piece[1] !== 'K')) { best = r; bestD = d; }
     }
@@ -579,7 +586,9 @@ const Plan = {
 function findSolution(step) {
   const s = Chess.fromFEN(step.fen);
   const g = GOALS[step.goal];
-  return qMoves(Chess.legalMoves(s)).find((m) => g.ok(Chess.makeMove(s, m), m, step));
+  // alle promoties (koningin eerst): soms werkt juist een toren of paard
+  return Chess.legalMoves(s).sort((a, b) => (b.promo === 'Q') - (a.promo === 'Q'))
+    .find((m) => g.ok(Chess.makeMove(s, m), m, step));
 }
 
 /* Bij 'sterren pakken' en 'alles slaan': staat er naast pionnen ook een ander wit stuk,
@@ -797,7 +806,7 @@ function Exercise(step, ui) {
     const nLeft = budget - wm;             // zetten van wit die nog over zijn (incl. deze)
     const before = planStart;
     // 1. de zet uit de oplossing
-    if (!free && Plan.moveStr(m) === step.line[pi]) {
+    if (!free && Plan.moveStr(m) === step.line[pi] && (!m.promo || Plan.good(before, m, nLeft, step.win))) {
       if (pi + 1 >= step.line.length) return planSolved();
       const reply = step.line[pi + 1];
       pi += 2;
@@ -1054,11 +1063,8 @@ function LessonPlayer(li) {
           Sound.play('good');
           confetti(40);
           setText(pick(PRAISE), 'happy');
-          if (withBoard) {
-            box.querySelectorAll('.quiz-btn:not(.right)').forEach((x) => x.remove());
-            box.insertAdjacentHTML('beforeend', '<button class="btn green huge pulse" id="next">Verder ▶</button>');
-            $('#next').onclick = () => { Sound.play('tap'); advance(); };
-          } else nextButton('Verder ▶', true);
+          // 'Verder' komt altijd op dezelfde plek (onder Pim), ook bij een quiz met bordje
+          later(() => nextButton('Verder ▶', true), withBoard ? 700 : 0);
         } else {
           b.classList.remove('shake'); b.getBoundingClientRect(); b.classList.add('shake', 'wrong');
           Sound.play('oops');

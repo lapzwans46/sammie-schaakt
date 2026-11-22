@@ -28,7 +28,10 @@
     const g = GOALS[st.goal];
     if (st.goal === 'stopmate' && !blackMatesIn1({ ...s, turn: 'b', ep: null })) return { ok: false, msg: 'Er is geen matdreiging van zwart' };
     if (!g) return { ok: false, msg: `Onbekend doel '${st.goal}'` };
-    const sols = qMoves(Chess.legalMoves(s)).filter((m) => g.ok(Chess.makeMove(s, m), m, st));
+    // alle promoties tellen mee (koningin, toren, loper, paard); hetzelfde vakje = dezelfde zet
+    const seen = new Set();
+    const sols = Chess.legalMoves(s).filter((m) => g.ok(Chess.makeMove(s, m), m, st))
+      .filter((m) => { const k = Plan.moveStr(m); if (seen.has(k)) return false; seen.add(k); return true; });
     const list = sols.map(san).join(' ');
     if (!sols.length) return { ok: false, msg: 'Geen oplossing!' };
     if (sols.length > 1 && !MULTI_OK.includes(st.goal)) return { ok: false, msg: `${sols.length} oplossingen: ${list}` };
@@ -49,7 +52,7 @@
     const m = sols[0];
     if (Plan.wins(s, m, win)) return null;
     const s2 = Chess.makeMove(s, m);
-    for (const r of qMoves(Chess.legalMoves(s2))) {
+    for (const r of Chess.legalMoves(s2)) { // ook zwart mag promoveren tot elk stuk
       const d = firstDual(Chess.makeMove(s2, r), k - 1, win, path.concat(Plan.moveStr(m), Plan.moveStr(r)));
       if (d) return d;
     }

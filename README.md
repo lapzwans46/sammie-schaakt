@@ -160,6 +160,7 @@ manifest.json     app-gegevens voor het beginscherm
 img/icon-*.png    app-icoontjes
 robots.txt        niet opnemen in zoekmachines
 tools/puzzelcontrole.html  controleert alle lessen en puzzels (open in de browser)
+tools/layoutcontrole.html  controleert dat bord, Pim en knoppen overal op dezelfde plek staan
 ```
 
 ## Puzzels controleren
@@ -175,6 +176,22 @@ Die controleert met de regels van de app zelf dat:
 - alle sterren- en sla-opdrachten te doen zijn.
 
 Bovenaan staat een groen vinkje of een rode lijst met wat er niet klopt.
+
+## Layout controleren
+
+Open `tools/layoutcontrole.html` in de browser (liggend én staand, of op de iPad) na elke wijziging aan
+schermen, puzzels of spelletjes. Die opent alle schermen met een bord (lessen, quiz, opdrachten, puzzels,
+puzzel van de dag, spelletjes, potjes), ook na een goed antwoord, en controleert dat:
+
+- het bord, Pim, de tekstballon en de knoppen overal op precies dezelfde plek staan;
+  de knoppen hebben twee vaste plekken: links *Opnieuw* / *Nog eens*, rechts *Hint* / *Verder*;
+- alles op het scherm past (niets schuift).
+
+## Promoveren
+
+Een pion aan de overkant mag altijd kiezen: koningin, toren, loper of paard (in lessen, puzzels en potjes).
+De puzzelcontrole rekent ook met al die keuzes (ook voor zwart). Promoveren naar verschillende stukken
+op hetzelfde vakje telt als één oplossing; de app keurt het gekozen stuk goed als het werkt.
 
 ## Bewuste keuzes
 

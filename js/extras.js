@@ -692,7 +692,7 @@ function sheetAnswer(p) {
   const st = { type: 'goal', ...p };
   const word = (s, str) => {
     const m = Plan.find(s, str);
-    return m ? `${PIECE_WORD[m.piece[1]]} naar ${str.split('-')[1]}` : str;
+    return m ? `${PIECE_WORD[m.piece[1]]} naar ${str.split('-')[1]}${m.promo ? ' (en promoveren)' : ''}` : str;
   };
   if (p.goal === 'plan') {
     let s = Chess.fromFEN(p.fen);
@@ -704,7 +704,7 @@ function sheetAnswer(p) {
     return parts.join(', dan ');
   }
   const m = findSolution(st);
-  return m ? `${PIECE_WORD[m.piece[1]]} naar ${Chess.sqName(m.to)}` : '';
+  return m ? `${PIECE_WORD[m.piece[1]]} naar ${Chess.sqName(m.to)}${m.promo ? ' (en promoveren)' : ''}` : '';
 }
 
 function PuzzleSheet(level = 1) {
