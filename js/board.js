@@ -2,17 +2,26 @@
    Sammie Schaakt! - het bord op het scherm
    ========================================================= */
 class BoardView {
-  constructor(container, { onTap = () => {}, coords = true } = {}) {
+  /* region: alleen een deel van het bord laten zien (bv. mini-schaak op 5x5):
+     { r0, r1, c0, c1 } = eerste/laatste rij en kolom (0 = rij 8 / kolom a). De vakjes houden hun gewone nummer. */
+  constructor(container, { onTap = () => {}, coords = true, region = null } = {}) {
     this.el = document.createElement('div');
     this.el.className = 'board';
     this.squares = [];
+    const R = this.region = region || { r0: 0, r1: 7, c0: 0, c1: 7 };
+    if (region) {
+      this.el.style.gridTemplateColumns = `repeat(${R.c1 - R.c0 + 1}, 1fr)`;
+      this.el.style.gridTemplateRows = `repeat(${R.r1 - R.r0 + 1}, 1fr)`;
+      this.el.classList.add('mini');
+    }
     for (let i = 0; i < 64; i++) {
-      const sq = document.createElement('div');
       const r = Math.floor(i / 8), c = i % 8;
+      if (r < R.r0 || r > R.r1 || c < R.c0 || c > R.c1) { this.squares.push(null); continue; }
+      const sq = document.createElement('div');
       sq.className = 'sq ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
       sq.dataset.i = i;
-      if (coords && c === 0) sq.insertAdjacentHTML('beforeend', `<span class="coord rank">${8 - r}</span>`);
-      if (coords && r === 7) sq.insertAdjacentHTML('beforeend', `<span class="coord file">${'abcdefgh'[c]}</span>`);
+      if (coords && c === R.c0) sq.insertAdjacentHTML('beforeend', `<span class="coord rank">${8 - r}</span>`);
+      if (coords && r === R.r1) sq.insertAdjacentHTML('beforeend', `<span class="coord file">${'abcdefgh'[c]}</span>`);
       const holder = document.createElement('div');
       holder.className = 'holder';
       sq.appendChild(holder);
@@ -39,11 +48,13 @@ class BoardView {
      (kinderen schieten vaak iets door). Ver naast het bord: geen vakje. */
   squareAt(x, y) {
     const r = this.el.getBoundingClientRect();
-    const cell = r.width / 8;
+    const R = this.region;
+    const nc = R.c1 - R.c0 + 1, nr = R.r1 - R.r0 + 1;
+    const cell = r.width / nc;
     if (x < r.left - cell || y < r.top - cell || x > r.right + cell || y > r.bottom + cell) return null;
-    const c = Math.min(7, Math.max(0, Math.floor(((x - r.left) / r.width) * 8)));
-    const row = Math.min(7, Math.max(0, Math.floor(((y - r.top) / r.height) * 8)));
-    return row * 8 + c;
+    const c = Math.min(nc - 1, Math.max(0, Math.floor(((x - r.left) / r.width) * nc)));
+    const row = Math.min(nr - 1, Math.max(0, Math.floor(((y - r.top) / r.height) * nr)));
+    return (row + R.r0) * 8 + c + R.c0;
   }
 
   down(e) {
@@ -107,6 +118,7 @@ class BoardView {
     const marks = new Set(opts.marks || []);
     for (let i = 0; i < 64; i++) {
       const s = this.squares[i];
+      if (!s) continue;
       const p = board[i];
       const cls = [];
       if (opts.selected === i) cls.push('selected');

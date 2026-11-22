@@ -77,12 +77,25 @@ Met 🔀 komen er andere puzzels op.
 
 Een deel komt uit `js/puzzles.js`, de rest automatisch uit de lessen. Geen moeilijke termen.
 
-**Prijzenkast:** 30 prijzen: eerste les, elke wereld (ook wereld 4, 5 en 6), een rondje op Moeilijker en op Superdenker, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
+**Prijzenkast:** 32 prijzen: eerste les, elke wereld (ook wereld 4, 5 en 6), een rondje op Moeilijker en op Superdenker, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
 een sticker per verslagen familielid en "Kampioen van de familie".
 
 **Spelletjes:**
 - *Pionnenrace*: alleen pionnen, wie het eerst aan de overkant is wint. Tegen Pim, op "Makkelijk" of "Moeilijker".
 - *Bord opzetten*: alle stukken op de goede beginplek zetten, eerst wit, dan zwart. Bij een fout geeft Pim een tip.
+- *Vakjesjacht*: Pim noemt een vakje (zoals e4), Sam tikt het aan. 10 per rondje. De hint licht de rij en de kolom op.
+- *Paardensprong*: 8 levels: spring met het paard naar de ster, om witte pionnen heen. Vanaf level 5 staan er zwarte pionnen
+  die het paard kunnen pakken. Sterren voor de kortste weg.
+- *Wie ben ik?*: Pim vertelt een raadsel ("Ik ga alleen schuin..."), Sam tikt het goede stuk aan. Daarna laat het stuk zien hoe het loopt.
+- *Pim-vangertje*: vang het zwarte paard met de koningin (makkelijk) of de toren (moeilijker). Ga je staan waar het paard
+  kan springen, dan pakt Pim jou en krijg je een nieuwe kans.
+- *Schatkist bewaken*: zwarte pionnen lopen naar de onderste rij (de schat). Sla ze op tijd; pionnen slaan schuin terug. 3 hartjes.
+- *Mini-schaak*: een echt potje op 5x5 (a1 t/m e5) tegen Pim. Pionnen zetten één stapje, rokeren kan niet.
+- *Stukken-memory*: zoek het kaartje met het stuk bij het kaartje met hoe het loopt.
+- *Slaan-race*: in één minuut zoveel mogelijk zwarte stukken slaan, met de koningin of het paard. De tijd loopt pas na de eerste zet.
+
+Elk spelletje gebruikt dezelfde indeling als de lessen (Pim links, bord rechts, *Opnieuw* en *Hint*), en staat in de layoutcontrole.
+Records worden per speler bewaard. Prijzen: *Spelletjesheld* (alle 10 gespeeld) en *Mini-kampioen*.
 
 **Terugkijken met Pim:** na een potje (vanaf 6 zetten) laat Pim één ding zien dat goed ging, en hooguit
 twee momenten om van te leren (een los stuk, een gemiste kans of een gemist schaakmat). Met "Wat was beter?" laat hij de betere zet zien.
@@ -93,7 +106,9 @@ Met naam, poppetje en datum. Printen gaat altijd op één A4, liggend: ook als d
 
 **Voorlezen:** Pim leest alles wat hij zegt hardop voor (met de Nederlandse stem van het apparaat, zonder internet).
 Tik op Pim of zijn tekstballon om het nog eens te horen. Ook de meldingen in een potje ("Schaak!", "Pas op!") worden voorgelezen.
-Uitzetten kan bij ⚙️ > Pim leest voor. Heeft het apparaat geen Nederlandse stem, dan blijft het stil.
+**Geluidknop:** op elk scherm staat naast de terugknop (op het startscherm naast 🎨) een vaste knop 🔊.
+Tik erop en kies zelf: *Geluidjes* aan/uit en *Pim praat* aan/uit. Het icoontje laat zien hoe het staat (🔊 alles aan, 🔉 één van de twee, 🔇 alles uit).
+Dit geldt per speler en is hetzelfde als de schakelaars bij ⚙️. Heeft het apparaat geen Nederlandse stem, dan blijft het stil.
 
 **Sterren pakken:** na een zet blijft je stuk gekozen, dus je kunt meteen naar de volgende ster tikken.
 Tik je op een ster waar het stuk niet in één keer heen kan, dan legt Pim dat uit.
@@ -162,7 +177,8 @@ js/board.js       het bord op het scherm
 js/app.js         schermen, lessen, puzzels, potjes, opslag
 js/editor.js      poppetjesmaker (met niveaukiezer)
 js/parents.js     voor ouders: instellingen, overzicht, tegenstanders, spelers
-js/extras.js      kleuren, spelletjes, terugkijken met Pim, diploma's
+js/extras.js      kleuren, spelletjesmenu, pionnenrace, bord opzetten, terugkijken met Pim, diploma's
+js/games.js       de andere 8 spelletjes (vakjesjacht t/m slaan-race)
 js/main.js        start de app
 sw.js             offline werken op de iPad
 manifest.json     app-gegevens voor het beginscherm

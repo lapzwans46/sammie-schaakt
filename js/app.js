@@ -206,10 +206,69 @@ function go(screen, ...args) {
   screenCleanup = null;
   closeModal();
   Sound.hush();
+  if ($('#soundPanel')) $('#soundPanel').remove();
   app.innerHTML = '';
   screen(...args);
+  soundButton();
   window.scrollTo(0, 0);
 }
+
+/* =========================================================
+   VASTE GELUIDKNOP (op elk scherm, naast de terugknop)
+   Tik erop: twee grote knoppen om geluidjes en Pims stem aan/uit te zetten.
+   Zo kiest de speler het zelf. Het geldt per speler (net als bij ⚙️).
+   ========================================================= */
+function soundIcon() {
+  const s = Store.data.settings;
+  const voice = s.voice !== false;
+  return s.sound && voice ? '🔊' : (!s.sound && !voice ? '🔇' : '🔉');
+}
+function soundButton() {
+  if ($('#soundBtn')) { $('#soundBtn').textContent = soundIcon(); return; }
+  const back = $('.topbar #back');
+  const html = `<button class="${back ? 'round-btn' : 'corner-btn left2'}" id="soundBtn" aria-label="Geluid en stem">${soundIcon()}</button>`;
+  if (back) back.insertAdjacentHTML('afterend', html);
+  else if ($('.screen.home')) $('.screen.home').insertAdjacentHTML('afterbegin', html);
+  else return;
+  $('#soundBtn').onclick = (e) => { e.stopPropagation(); soundPanel(); };
+}
+function soundPanel() {
+  const old = $('#soundPanel');
+  if (old) { old.remove(); return; }
+  const s = Store.data.settings;
+  const b = $('#soundBtn').getBoundingClientRect();
+  const panel = document.createElement('div');
+  panel.id = 'soundPanel';
+  panel.className = 'sound-panel';
+  panel.style.top = Math.round(b.bottom + 10) + 'px';
+  panel.style.left = Math.max(8, Math.round(b.left)) + 'px';
+  const fill = () => {
+    const voice = s.voice !== false;
+    panel.innerHTML = `
+      <button class="sp-btn ${s.sound ? 'on' : ''}" id="spSound"><span>${s.sound ? '🎵' : '🔕'}</span><b>Geluidjes</b><i>${s.sound ? 'AAN' : 'UIT'}</i></button>
+      ${Sound.canSpeak() ? `<button class="sp-btn ${voice ? 'on' : ''}" id="spVoice"><span>${voice ? '🗣️' : '🤐'}</span><b>Pim praat</b><i>${voice ? 'AAN' : 'UIT'}</i></button>` : ''}`;
+    $('#spSound', panel).onclick = (e) => {
+      e.stopPropagation();
+      s.sound = !s.sound; Store.save(); applySettings(); Sound.play('tap'); fill(); soundButton();
+    };
+    if ($('#spVoice', panel)) $('#spVoice', panel).onclick = (e) => {
+      e.stopPropagation();
+      s.voice = !(s.voice !== false); Store.save(); applySettings(); fill(); soundButton();
+      if (s.voice) Sound.say('Hoi! Ik praat weer.');
+    };
+  };
+  fill();
+  document.body.appendChild(panel);
+  // ergens anders tikken: paneel dicht
+  const close = (e) => {
+    if (panel.contains(e.target)) return;
+    panel.remove();
+    document.removeEventListener('pointerdown', close, true);
+  };
+  setTimeout(() => document.addEventListener('pointerdown', close, true), 0);
+}
+// Een scherm dat zichzelf opnieuw tekent, krijgt de knop ook terug.
+new MutationObserver(() => { if (!$('#soundBtn')) soundButton(); }).observe(document.getElementById('app'), { childList: true });
 
 function applySettings() {
   const s = Store.data.settings;
@@ -279,6 +338,8 @@ function getBadges() {
     { id: 'daily10', icon: '🌟', title: 'Dagpuzzel-ster', desc: 'Doe 10 keer de puzzel van de dag', test: () => dailyDone() >= 10 },
     { id: 'race1', icon: '🏁', title: 'Pionnenkampioen', desc: 'Win een pionnenrace', test: () => Store.data.extra.raceWins >= 1 },
     { id: 'setup', icon: '🧱', title: 'Bord-bouwer', desc: 'Zet het hele bord goed klaar', test: () => Store.data.extra.setups >= 1 },
+    { id: 'games', icon: '🎪', title: 'Spelletjesheld', desc: 'Speel alle 10 spelletjes', test: () => Object.keys(Store.data.extra.played || {}).length >= 10 },
+    { id: 'mini1', icon: '♚', title: 'Mini-kampioen', desc: 'Win een potje mini-schaak', test: () => (Store.data.extra.miniWins || 0) >= 1 },
     { id: 'samen', icon: '👫', title: 'Samen gespeeld', desc: 'Speel een potje samen met iemand', test: () => Store.data.stats.games.some((g) => g.together) },
     ...FAMILY.opponents.map((o) => ({
       id: 'beat-' + o.id, person: o, title: `${o.name} verslagen`, desc: `Win van ${o.name}`,
@@ -349,7 +410,7 @@ function Home() {
       </button>
       <button class="big-btn pink" id="toGames">
         <div class="big-icon emoji">🏁</div>
-        <div class="big-text"><b>Spelletjes</b><small>Pionnenrace en bord opzetten</small></div>
+        <div class="big-text"><b>Spelletjes</b><small>10 spelletjes met de stukken</small></div>
       </button>
       <button class="big-btn purple" id="toPrizes">
         <div class="big-icon emoji">🏅</div>

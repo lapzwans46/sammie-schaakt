@@ -1,7 +1,7 @@
 /* =========================================================
    Sammie Schaakt! - extra's
    - Kleuren kiezen (bord en stukken)
-   - Spelletjes: Pionnenrace en Bord opzetten
+   - Spelletjes: menu, Pionnenrace en Bord opzetten (de andere spelletjes staan in games.js)
    - Terugkijken met Pim (na een potje)
    - Diploma's om uit te printen
    ========================================================= */
@@ -78,33 +78,47 @@ function ThemePicker() {
    --------------------------------------------------------- */
 function MiniGames() {
   const x = Store.data.extra;
+  const best = x.best || {};
+  const card = (pic, title, text, buttons, foot) => `
+      <div class="game-card">
+        <div class="gc-pic">${pic}</div>
+        <h3>${title}</h3>
+        <p>${text}</p>
+        <div class="gc-buttons">${buttons}</div>
+        <small>${foot}</small>
+      </div>`;
+  const P = (p) => Pieces.svg(p);
+  const two = (id) => `<button class="btn green" id="${id}Easy">Makkelijk</button><button class="btn orange" id="${id}Hard">Moeilijker</button>`;
+  const one = (id, c = 'blue') => `<button class="btn ${c}" id="${id}">Starten</button>`;
+  const rec = (k, txt) => (best[k] !== undefined ? txt(best[k]) : 'Nog niet gespeeld');
   app.innerHTML = `
   <div class="screen choose">
     <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Spelletjes</div><div class="spacer"></div></div>
     <div class="games-grid">
-      <div class="game-card">
-        <div class="gc-pic">${Pieces.svg('wP')}${Pieces.svg('wP')}${Pieces.svg('bP')}</div>
-        <h3>Pionnenrace 🏁</h3>
-        <p>Alleen pionnen! Wie het eerst een pion aan de overkant heeft, wint.</p>
-        <div class="gc-buttons">
-          <button class="btn green" id="raceEasy">Makkelijk</button>
-          <button class="btn orange" id="raceHard">Moeilijker</button>
-        </div>
-        <small>🏆 ${x.raceWins} keer gewonnen</small>
-      </div>
-      <div class="game-card">
-        <div class="gc-pic">${Pieces.svg('wR')}${Pieces.svg('wK')}${Pieces.svg('wN')}</div>
-        <h3>Bord opzetten 🧱</h3>
-        <p>Zet alle stukken op de goede plek, net als aan het begin van een potje.</p>
-        <div class="gc-buttons"><button class="btn blue" id="setup">Starten</button></div>
-        <small>✅ ${x.setups} keer gelukt</small>
-      </div>
+      ${card(P('wP') + P('wP') + P('bP'), 'Pionnenrace 🏁', 'Alleen pionnen! Wie het eerst een pion aan de overkant heeft, wint.', two('race'), `🏆 ${x.raceWins} keer gewonnen`)}
+      ${card(P('wR') + P('wK') + P('wN'), 'Bord opzetten 🧱', 'Zet alle stukken op de goede plek, net als aan het begin van een potje.', one('setup'), `✅ ${x.setups} keer gelukt`)}
+      ${card('<span class="gc-emoji">🎯</span>', 'Vakjesjacht', 'Pim noemt een vakje, zoals e4. Kun jij het vinden?', one('hunt'), rec('jacht', (v) => `🎯 Record: ${v} van de 10`))}
+      ${card(P('wN') + '<span class="gc-emoji">⭐</span>', 'Paardensprong', 'Spring met het paard door het doolhof naar de ster.', one('maze'), rec('doolhof', (v) => `⭐ Record: ${v} sterren`))}
+      ${card('<span class="gc-emoji">❓</span>' + P('wB'), 'Wie ben ik?', 'Pim vertelt een raadsel over een stuk. Welk stuk is het?', one('who'), rec('wie', (v) => `🕵️ Record: ${v} van de 8`))}
+      ${card(P('wQ') + P('bN'), 'Pim-vangertje', 'Vang het springende paard. Ga niet staan waar het paard jou pakt!', two('catch'), (x.played || {}).vangen ? `🐴 ${(x.played || {}).vangen} keer gevangen` : 'Nog niet gespeeld')}
+      ${card(P('bP') + P('bP') + '<span class="gc-emoji">💰</span>', 'Schatkist bewaken', 'Zwarte pionnen willen je schat. Sla ze voor ze onderaan zijn!', two('treasure'), (x.played || {}).schat ? `💰 ${(x.played || {}).schat} keer gespeeld` : 'Nog niet gespeeld')}
+      ${card(P('wK') + P('bK'), 'Mini-schaak', 'Een echt potje op een klein bord. Zo ben je snel klaar!', two('mini'), `🏆 ${x.miniWins || 0} keer gewonnen`)}
+      ${card('<span class="gc-emoji">🃏</span>' + P('wR'), 'Stukken-memory', 'Zoek het stuk bij het plaatje van hoe het loopt.', one('memory'), rec('memory', (v) => `🃏 Record: ${v} beurten`))}
+      ${card(P('wQ') + '<span class="gc-emoji">⏱️</span>', 'Slaan-race', 'Sla in één minuut zoveel mogelijk zwarte stukken!', two('cap'), rec('race60-makkelijk', (v) => `⏱️ Record: ${v} stukken`))}
     </div>
   </div>`;
   $('#back').onclick = () => go(Home);
-  $('#raceEasy').onclick = () => { Sound.play('tap'); go(PawnRace, 'makkelijk'); };
-  $('#raceHard').onclick = () => { Sound.play('tap'); go(PawnRace, 'moeilijker'); };
-  $('#setup').onclick = () => { Sound.play('tap'); go(BoardSetup); };
+  const on = (id, fn, ...a) => { $('#' + id).onclick = () => { Sound.play('tap'); go(fn, ...a); }; };
+  on('raceEasy', PawnRace, 'makkelijk'); on('raceHard', PawnRace, 'moeilijker');
+  on('setup', BoardSetup);
+  on('hunt', SquareHunt);
+  on('maze', KnightMaze);
+  on('who', WhoAmI);
+  on('catchEasy', CatchPim, 'makkelijk'); on('catchHard', CatchPim, 'moeilijker');
+  on('treasureEasy', Treasure, 'makkelijk'); on('treasureHard', Treasure, 'moeilijker');
+  on('miniEasy', MiniChess, 'makkelijk'); on('miniHard', MiniChess, 'moeilijker');
+  on('memory', PieceMemory);
+  on('capEasy', CaptureRace, 'makkelijk'); on('capHard', CaptureRace, 'moeilijker');
 }
 
 /* ---------- Pionnenrace ---------- */
@@ -235,6 +249,7 @@ function PawnRace(levelKey) {
 
   function finish(kidWon, why) {
     over = true;
+    gamePlayed('race');
     draw();
     if (kidWon) {
       Store.data.extra.raceWins++;
@@ -389,7 +404,7 @@ function BoardSetup() {
       slater(() => { color = 'b'; fillTray(); }, 1800);
     } else {
       Store.data.extra.setups++;
-      Store.save();
+      gamePlayed('setup');
       slater(() => {
         Sound.play('win');
         confetti(120);

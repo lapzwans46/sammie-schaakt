@@ -1081,3 +1081,70 @@ html, body { overscroll-behavior: none; }
 
 /* iPad: stukken niet als plaatje laten 'oppakken' door het systeem */
 .piece, .piece-svg, .board svg { -webkit-user-drag: none; user-drag: none; -webkit-touch-callout: none; }
+
+/* =========================================================
+   VASTE GELUIDKNOP (naast de terugknop) en het paneeltje
+   ========================================================= */
+#soundBtn.round-btn { font-size: 1.5rem; }
+.corner-btn.left2 { right: auto; left: 82px; }
+@media (max-width: 520px) { .corner-btn.left2 { left: 64px; } }
+.sound-panel {
+  position: fixed; z-index: 900;
+  display: flex; flex-direction: column; gap: 10px;
+  background: #fff; border-radius: 22px; padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  animation: spIn .15s ease-out;
+}
+@keyframes spIn { from { transform: translateY(-6px); opacity: 0; } }
+.sp-btn {
+  display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px;
+  min-width: 250px; padding: 10px 14px; border-radius: 16px;
+  background: var(--grey); box-shadow: 0 4px 0 var(--grey-d);
+  font-size: 1.25rem; text-align: left; color: var(--ink);
+}
+.sp-btn span { font-size: 1.8rem; }
+.sp-btn i { font-style: normal; font-weight: 900; font-size: 1rem; padding: 4px 10px; border-radius: 10px; background: #fff; }
+.sp-btn.on { background: #dff7e4; box-shadow: 0 4px 0 #8fd19e; }
+.sp-btn.on i { color: #fff; background: var(--green); }
+.sp-btn:active { transform: translateY(3px); }
+
+/* =========================================================
+   NIEUWE SPELLETJES
+   ========================================================= */
+.games-grid { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); max-width: 1180px; padding-bottom: 24px; }
+.game-card { padding: 16px; }
+.game-card h3 { font-size: 1.55rem; }
+.game-card p { font-size: 1rem; }
+.gc-pic .piece-svg { width: 58px; height: 58px; }
+.gc-emoji { font-size: 48px; line-height: 58px; }
+.hearts { width: 120px; flex: none; text-align: right; font-size: 1.5rem; letter-spacing: 2px; white-space: nowrap; }
+.progress.timer .progress-fill { transition: width .2s linear; background: var(--blue); }
+.progress.timer .progress-fill.low { background: var(--red); }
+/* mini-schaak: groter lettertype bij de coördinaten */
+.board.mini .coord { font-size: calc(var(--bs) * .03); }
+
+/* memory: kaartjes op de plek van het bord */
+.memory-wrap { background: var(--frame); }
+.memory { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 3%; padding: 2%; }
+.mem-card { position: relative; border-radius: 14px; perspective: 600px; padding: 0; background: none; }
+.mem-card > span { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform .35s; display: grid; place-items: center; box-shadow: 0 4px 0 rgba(0, 0, 0, .25); }
+.mem-back { background: linear-gradient(135deg, var(--blue), #9b5de5); color: #fff; font-size: calc(var(--bs) * .09); font-weight: 900; }
+.mem-front { background: #fff; transform: rotateY(180deg); padding: 6%; }
+.mem-card.up .mem-back { transform: rotateY(180deg); }
+.mem-card.up .mem-front { transform: rotateY(0); }
+.mem-card.done .mem-front { background: #e7ffe9; box-shadow: 0 0 0 4px var(--green); }
+.mem-card.peek { animation: glow .5s ease-in-out infinite; box-shadow: 0 0 0 5px var(--yellow); }
+.mem-piece { width: 80%; height: 80%; display: block; }
+.mem-piece .piece-svg { width: 100%; height: 100%; }
+.mc-grid { width: 100%; aspect-ratio: 1; display: grid; grid-template-columns: repeat(5, 1fr); border-radius: 6px; overflow: hidden; }
+.mc-grid span { position: relative; display: grid; place-items: center; }
+.mc-grid span.l { background: var(--light-sq); }
+.mc-grid span.d { background: var(--dark-sq); }
+.mc-grid .piece-svg { width: 100%; height: 100%; }
+.mc-dot { width: 45%; height: 45%; border-radius: 50%; background: rgba(58, 44, 64, .55); }
+.mc-hit { font-style: normal; font-weight: 900; color: var(--red); font-size: calc(var(--bs) * .025); }
+/* telefoon: smallere balk rechtsboven, dan past de titel naast de geluidknop */
+@media (max-width: 520px) {
+  .topbar .progress, .topbar .hearts { width: 64px; }
+  .topbar .hearts { font-size: .95rem; letter-spacing: 0; }
+}
