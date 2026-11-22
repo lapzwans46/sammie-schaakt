@@ -37,21 +37,21 @@ const PUZZLES = [
   { level: 1, goal: 'hanging', text: 'Welk stuk is los? Pak het!', fen: '8/k2p1B2/8/2p4R/2n5/1P1b4/8/3K4 w - - 0 1' },
   // stuk in veiligheid brengen
   { level: 1, goal: 'safe', text: 'Red je toren!', fen: '4k3/8/8/8/8/4n3/Pp6/R3K3 w - - 0 1' },
-  { level: 1, goal: 'safe', text: 'Red je paard!', fen: '6k1/8/8/8/8/7r/8/1K5N w - - 0 1' },
+  { level: 1, goal: 'safe', text: 'Zwart valt aan! Zorg dat niks van jou te pakken is.', fen: '2K5/2B5/2p3N1/1p6/2P1n2r/8/8/3k4 w - - 0 1' },
   { level: 1, goal: 'safe', text: 'Zwart valt aan! Zorg dat niks van jou te pakken is.', fen: '5N2/1K6/6R1/1p6/8/4n3/2b2P2/4k3 w - - 0 1' },
   { level: 1, goal: 'safe', text: 'Zwart valt aan! Zorg dat niks van jou te pakken is.', fen: 'k4N2/3R4/2n5/P7/p7/8/4bK2/8 w - - 0 1' },
   { level: 1, goal: 'safe', text: 'Zwart valt aan! Zorg dat niks van jou te pakken is.', fen: 'k7/N5R1/8/8/3p2K1/2P2n2/8/5b2 w - - 0 1' },
 
   /* ---------------- NIVEAU 2: MOEILIJKER ---------------- */
   // vork: val twee stukken tegelijk aan
-  { level: 2, goal: 'fork', text: 'Maak een vork met je paard!', fen: '1NK5/8/8/4p3/1q1r4/1P6/7k/8 w - - 0 1' },
+  { level: 2, goal: 'fork', text: 'Maak een vork met je paard!', fen: '1NK5/8/8/4p3/1q1r4/1P6/P5Pk/8 w - - 0 1' },
   { level: 2, goal: 'fork', text: 'Maak een vork met je paard!', fen: '8/8/2r5/3K4/2p5/1N6/k1q2P2/8 w - - 0 1' },
   { level: 2, goal: 'fork', text: 'Maak een vork met je paard!', fen: '8/k6q/4K3/r1p5/3N4/5P2/8/8 w - - 0 1' },
   { level: 2, goal: 'fork', text: 'Maak een vork met je paard!', fen: '8/8/8/p3q2k/5r2/4P1K1/1N6/8 w - - 0 1' },
   { level: 2, goal: 'fork', text: 'Maak een vork met je koningin!', fen: '8/r6k/8/pPp5/6K1/2n5/1Q6/8 w - - 0 1' },
   { level: 2, goal: 'fork', text: 'Maak een vork met je koningin!', fen: '4k3/2p3Q1/3r4/8/1P3pK1/8/3n4/8 w - - 0 1' },
   // twee zetten: pak de koningin
-  { level: 2, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 2 zetten.', fen: '3K3k/3p4/7N/4q3/8/1P6/8/8 w - - 0 1', line: ['h6-f7', 'h8-g8', 'f7-e5'], say: ['Goed! En nu?'] },
+  { level: 2, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 2 zetten.', fen: '3K3k/3p4/7N/4q3/8/1P6/P7/8 w - - 0 1', line: ['h6-f7', 'h8-g8', 'f7-e5'], say: ['Goed! En nu?'] },
   { level: 2, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 2 zetten.', fen: '2K5/8/5p2/4N3/1q6/8/7P/2k5 w - - 0 1', line: ['e5-d3', 'c1-c2', 'd3-b4'], say: ['Goed! En nu?'] },
   { level: 2, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 2 zetten.', fen: '4k3/7N/4p3/3P4/6q1/8/3K4/8 w - - 0 1', line: ['h7-f6', 'e8-d8', 'f6-g4'], say: ['Goed! En nu?'] },
   { level: 2, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 2 zetten.', fen: '4K3/2R5/5p2/7k/8/8/8/1B5q w - - 0 1', line: ['c7-h7', 'h5-g5', 'h7-h1'], say: ['Goed! En nu?'] },

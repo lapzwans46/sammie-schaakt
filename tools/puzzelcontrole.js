@@ -1,7 +1,20 @@
 /* Puzzelcontrole: zie puzzelcontrole.html. Gebruikt dezelfde regels als de app (GOALS in app.js). */
 (() => {
   const san = (m) => m.piece[1] + Chess.sqName(m.from) + (m.captured ? 'x' : '-') + Chess.sqName(m.to);
-  const MULTI_OK = ['to']; // uitleg-opdrachten ('zet een paard naar het midden'): meer goede zetten mag
+  const MULTI_OK = ['to'];
+  /* GENOEG KEUS: het bord mag het antwoord niet weggeven. Bij elke zet die Sam moet doen:
+     - wit heeft minstens 8 verschillende zetten (er is echt iets fout te doen);
+     - het stuk van de oplossing heeft minstens 3 vakjes (aantikken verraadt het antwoord niet).
+       Een pion is de uitzondering: die kan nu eenmaal alleen vooruit. */
+  const NO_CHOICE_RULE = ['to', 'castle', 'escape']; // uitleg-opdrachten
+  const nDests = (s, from) => new Set(Chess.legalMoves(s, from).map((m) => m.to)).size;
+  const nTotal = (s) => new Set(Chess.legalMoves(s).map(Plan.moveStr)).size;
+  const choiceProblem = (s, m) => {
+    const t = nTotal(s), d = nDests(s, m.from);
+    if (t < 8) return `te weinig keus: wit heeft maar ${t} zetten (minstens 8)`;
+    if (m.piece[1] !== 'P' && d < 3) return `verraadt het antwoord: het stuk heeft maar ${d} vakje(s) (minstens 3)`;
+    return null;
+  }; // uitleg-opdrachten ('zet een paard naar het midden'): meer goede zetten mag
 
   function problemsWithPosition(st) {
     const s = Chess.fromFEN(st.fen);
@@ -35,6 +48,7 @@
     const list = sols.map(san).join(' ');
     if (!sols.length) return { ok: false, msg: 'Geen oplossing!' };
     if (sols.length > 1 && !MULTI_OK.includes(st.goal)) return { ok: false, msg: `${sols.length} oplossingen: ${list}` };
+    if (!NO_CHOICE_RULE.includes(st.goal)) { const c = choiceProblem(s, sols[0]); if (c) return { ok: false, msg: c }; }
     return { ok: true, msg: (sols.length > 1 ? `${sols.length} goede zetten (mag hier): ` : 'Eén oplossing: ') + list };
   }
 
@@ -58,7 +72,7 @@
     }
     return null;
   }
-  function checkPlan(fen, line, win, say) {
+  function checkPlan(fen, line, win, say, isDemo = false) {
     const bad = problemsWithPosition({ fen, goal: 'plan' });
     if (bad.length) return { ok: false, msg: 'Ongeldig: ' + bad.join(', ') };
     if (!line || line.length % 2 !== 1) return { ok: false, msg: 'line moet wit-zwart-wit... zijn (oneven aantal)' };
@@ -72,6 +86,7 @@
       if (sols.length !== 1) return { ok: false, msg: `zet ${k + 1}: ${sols.length} goede zetten (${names || 'geen'})` };
       if (Plan.moveStr(sols[0]) !== line[2 * k]) return { ok: false, msg: `zet ${k + 1}: de goede zet is ${names}, niet ${line[2 * k]}` };
       const m = sols[0];
+      if (!isDemo) { const c = choiceProblem(s, m); if (c) return { ok: false, msg: `zet ${k + 1}: ${c}` }; }
       if (left > 1 && Plan.wins(s, m, win)) return { ok: false, msg: `zet ${k + 1} is al meteen raak` };
       const s2 = Chess.makeMove(s, m);
       if (left === 1) {
@@ -100,7 +115,7 @@
     let r = null;
     if (st.type === 'goal' && st.goal === 'plan') r = checkPlan(st.fen, st.line, st.win, st.say);
     else if (st.type === 'goal') r = checkGoal(st);
-    else if (st.type === 'talk' && st.demoWin) r = checkPlan(st.fen, st.demo, st.demoWin, null);
+    else if (st.type === 'talk' && st.demoWin) r = checkPlan(st.fen, st.demo, st.demoWin, null, true); // filmpje: Sam zet zelf niks
     else if (st.type === 'stars' || st.type === 'capture') r = checkFree(st);
     if (r) rows.push({ where: `Les ${li + 1} (${l.title}), stap ${si + 1}`, kind: st.demoWin ? 'filmpje' : (st.goal === 'plan' ? `plan-${st.win}` : st.goal || st.type), text: st.text, ...r });
   }));

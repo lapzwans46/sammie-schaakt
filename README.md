@@ -174,6 +174,8 @@ Die controleert met de regels van de app zelf dat:
   (als zwart iets anders terugzet), zwart op geen enkele manier kan ontsnappen,
   en dat de filmpjes kloppen;
 - alle sterren- en sla-opdrachten te doen zijn.
+- het bord het antwoord **niet weggeeft**: bij elke zet die Sam moet doen heeft wit minstens 8 verschillende zetten,
+  en het stuk van de oplossing minstens 3 vakjes (een pion uitgezonderd). Zo kun je echt een fout maken.
 
 Bovenaan staat een groen vinkje of een rode lijst met wat er niet klopt.
 
