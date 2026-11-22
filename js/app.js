@@ -541,6 +541,20 @@ const Plan = {
     return replies.find((r) => nLeft <= 0 || !Plan.forced(Chess.makeMove(s2, r), nLeft, win)) || null;
   },
   find(s, str) { return qMoves(Chess.legalMoves(s)).find((m) => Plan.moveStr(m) === str) || null; },
+  /* in hoeveel zetten (hooguit max) kan wit het nog afdwingen? (max + 1 = niet) */
+  distance(s, max, win) {
+    for (let k = 1; k <= max; k++) if (Plan.forced(s, k, win)) return k;
+    return max + 1;
+  },
+  /* zwart kiest zelf: het antwoord waarna wit het langst nodig heeft (bij gelijk: liefst de koning) */
+  defend(s2, max, win) {
+    let best = null, bestD = -1;
+    for (const r of qMoves(Chess.legalMoves(s2))) {
+      const d = Plan.distance(Chess.makeMove(s2, r), max, win);
+      if (d > bestD || (d === bestD && r.piece[1] === 'K' && best.piece[1] !== 'K')) { best = r; bestD = d; }
+    }
+    return best;
+  },
 };
 
 /* Zoek een goede oplossing (voor de hulp na twee keer fout) */
@@ -594,10 +608,15 @@ function Exercise(step, ui) {
   /* vooruit denken: welke zet uit step.line is nu aan de beurt, en de stelling op dat moment */
   const isPlan = step.goal === 'plan';
   const planN = isPlan ? (step.line.length + 1) / 2 : 1;
-  let pi = 0, planStart = null;
+  /* pi = plek in step.line; wm = zetten van wit gedaan; budget = hoeveel zetten wit heeft.
+     free = Sam koos een andere weg die ook werkt (een omweg). Dan verdedigt zwart zich zelf
+     en mag elke zet die nog steeds werkt. */
+  let pi = 0, planStart = null, wm = 0, budget = planN, free = false;
   const planText = () => {
-    const k = pi / 2;
-    return `Zet ${k + 1} van ${planN}: ` + (k === 0 ? task : (step.say && step.say[k - 1]) || 'Nu jij weer!');
+    const left = budget - wm;
+    const say = free ? (left === 1 ? 'Nog één zet!' : 'Goed bezig! Ga zo door.')
+      : wm === 0 ? task : (step.say && step.say[wm - 1]) || 'Nu jij weer!';
+    return `Zet ${wm + 1} van ${budget}: ` + say;
   };
   const taskNow = () => (isPlan ? planText() : task);
 
@@ -611,7 +630,7 @@ function Exercise(step, ui) {
     state = step.fen ? Chess.fromFEN(step.fen) : Chess.fromPieces(step.pieces, 'w');
     stars = new Set((step.stars || []).map(Chess.sqIndex));
     selected = null; dests = []; last = null; locked = false; marks = [];
-    pi = 0; planStart = state;
+    pi = 0; planStart = state; wm = 0; budget = planN; free = false;
     draw();
   };
   /* vooruit denken: terug naar het begin van deze zet (niet van de hele opdracht) */
@@ -635,7 +654,7 @@ function Exercise(step, ui) {
   function showHint() {
     if (locked) return;
     const sol = freeMode ? freeSolution(step.type, state, stars)
-      : isPlan ? Plan.find(state, step.line[pi]) : findSolution(step);
+      : isPlan ? (free ? Plan.solutions(state, budget - wm, step.win)[0] : Plan.find(state, step.line[pi])) : findSolution(step);
     if (!sol) return;
     Sound.play('magic');
     usedHint = true;
@@ -728,52 +747,73 @@ function Exercise(step, ui) {
     }
   }
 
-  /* Vooruit denken: is dit de goede zet? Dan zet zwart vanzelf terug.
-     Fout? Dan laat zwart zien hoe hij ontsnapt, en probeer je deze zet opnieuw. */
+  /* Vooruit denken: is dit de goede zet? Dan zet zwart terug.
+     - de zet uit de oplossing: zwart zet de zet uit step.line;
+     - een andere weg die ook werkt, met hooguit één zet extra (bv. eerst de andere toren
+       bij het trappetje): ook goed! Dan krijgt Sam een zet extra en verdedigt zwart zich zelf;
+     - fout: zwart laat zien hoe hij ontsnapt, en Sam probeert die zet opnieuw. */
+  function planSolved() {
+    Stats.skill('plan', wrongCount === 0 && !usedHint);
+    elater(() => {
+      Sound.play('good');
+      confetti(50);
+      ui.setText(pick(PRAISE), 'happy');
+      ui.onSolved(wrongCount === 0 && !usedHint);
+    }, 450);
+  }
+  function blackReplies(r, text) {
+    elater(() => { Sound.play('good'); ui.setText(text, 'happy'); }, 350);
+    elater(() => {
+      const rr = r();
+      state = Chess.makeMove(state, rr);
+      last = { from: rr.from, to: rr.to };
+      Sound.play(rr.captured ? 'capture' : 'move');
+      draw({ from: rr.from, to: rr.to });
+      wm++;
+      planStart = state;
+      elater(() => { locked = false; ui.setText(planText()); }, 700);
+    }, 1500);
+  }
   function planMove(m) {
     locked = true;
-    const nLeft = planN - pi / 2;          // zetten van wit die nog over waren (incl. deze)
-    if (Plan.moveStr(m) === step.line[pi]) {
-      if (pi + 1 >= step.line.length) {     // laatste zet: gelukt!
-        Stats.skill('plan', wrongCount === 0 && !usedHint);
-        elater(() => {
-          Sound.play('good');
-          confetti(50);
-          ui.setText(pick(PRAISE), 'happy');
-          ui.onSolved(wrongCount === 0 && !usedHint);
-        }, 450);
-        return;
-      }
-      elater(() => { Sound.play('good'); ui.setText('Goed zo! Wat doet zwart nu?', 'happy'); }, 350);
-      elater(() => {
-        const r = Plan.find(state, step.line[pi + 1]);
-        state = Chess.makeMove(state, r);
-        last = { from: r.from, to: r.to };
-        Sound.play(r.captured ? 'capture' : 'move');
-        draw({ from: r.from, to: r.to });
-        pi += 2;
-        planStart = state;
-        elater(() => { locked = false; ui.setText(planText()); }, 700);
-      }, 1500);
-      return;
-    }
-    // fout
-    wrongCount++;
-    if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
+    const nLeft = budget - wm;             // zetten van wit die nog over zijn (incl. deze)
     const before = planStart;
+    // 1. de zet uit de oplossing
+    if (!free && Plan.moveStr(m) === step.line[pi]) {
+      if (pi + 1 >= step.line.length) return planSolved();
+      const reply = step.line[pi + 1];
+      pi += 2;
+      return blackReplies(() => Plan.find(state, reply), 'Goed zo! Wat doet zwart nu?');
+    }
+    // 2. (na een omweg) een zet die nog steeds werkt
+    if (free && Plan.good(before, m, nLeft, step.win)) {
+      if (Plan.wins(before, m, step.win)) return planSolved();
+      return blackReplies(() => Plan.defend(state, nLeft - 1, step.win), 'Goed zo! Wat doet zwart nu?');
+    }
     // Eerst de zet laten zien, dan pas rekenen (dat kan op een iPad even duren)
     elater(() => {
-      Sound.play('oops');
-      // Een omweg: zo lukt het ook, maar in meer zetten. Dat is niet fout, het kan alleen sneller.
-      const omweg = nLeft <= 3 && Plan.good(before, m, nLeft + 1, step.win);
-      if (omweg) {
-        ui.setText(`Dat kan ook, maar dan duurt het langer. Het kan in ${nLeft} ${nLeft === 1 ? 'zet' : 'zetten'}! Zoek de snelste weg.`, 'oops');
+      // 3. een omweg: zo lukt het ook, met één zet extra. Dat rekenen we gewoon goed!
+      if (!free && nLeft <= 3 && Plan.good(before, m, nLeft + 1, step.win)) {
+        free = true;
+        budget++;
+        Sound.play('good');
+        ui.setText(`Dat kan ook! Het duurt wel één zetje langer. Je krijgt ${budget} zetten.`, 'happy');
         elater(() => {
-          planBack();
-          ui.setText(wrongCount >= 2 ? planText() + ' Lukt het niet? Druk op 💡.' : planText());
-        }, 3600);
+          const rr = Plan.defend(state, nLeft, step.win);
+          state = Chess.makeMove(state, rr);
+          last = { from: rr.from, to: rr.to };
+          Sound.play(rr.captured ? 'capture' : 'move');
+          draw({ from: rr.from, to: rr.to });
+          wm++;
+          planStart = state;
+          elater(() => { locked = false; ui.setText(planText()); }, 700);
+        }, 2000);
         return;
       }
+      // 4. fout
+      wrongCount++;
+      if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
+      Sound.play('oops');
       const mated = Chess.gameStatus(state) === 'checkmate';
       const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
       const what = step.win === 'mate' ? 'Zo ontsnapt de koning' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;

@@ -29,7 +29,7 @@ Tip: druk op **F11** voor volledig scherm.
 Pim telt mee ("Zet 1 van 3") en vertelt na elke zet van zwart wat er nu moet. Elke les begint met een filmpje
 waarin Pim de hele reeks voordoet en bij elke zet uitlegt wat er gebeurt (met 🔁 Nog eens).
 Een verkeerde zet? Dan laat zwart meteen zien hoe hij ontsnapt, en probeert Sam díe zet opnieuw (niet de hele opdracht).
-Een omweg (het lukt ook, maar in meer zetten)? Dan zegt Pim eerlijk: "Dat kan ook, maar het kan sneller!".
+Een andere weg die ook werkt, met hooguit één zet extra (bijvoorbeeld bij het trappetje eerst de andere toren)? Die telt gewoon als goed: Pim zegt "Dat kan ook!", Sam krijgt een zet extra en zwart verdedigt zich vanaf dan zelf zo goed mogelijk.
 Elke opdracht heeft in **elk scenario** maar één oplossing: ook als zwart iets anders zou terugzetten,
 heeft wit op elk moment precies één goede zet. Bij een paar trappetjes staat daarom een zwarte pion op het bord;
 die zorgt ervoor dat er geen tweede manier is om mat te geven.
