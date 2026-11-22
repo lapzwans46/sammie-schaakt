@@ -2,7 +2,7 @@
    Meet op alle schermen met een bord waar het bord, Pim, de tekstballon en de knoppenrij staan,
    ook na een goed antwoord of een opgeloste opdracht. Alles hoort overal op dezelfde plek te staan,
    en er mag niets buiten het scherm vallen (schuiven). */
-Sound.play = () => {}; window.confetti = () => {};
+Sound.play = () => {}; Sound.say = () => {}; window.confetti = () => {}; // stil testen: geen geluidjes en geen stem
 try { localStorage.clear(); } catch (e) { /* ok */ }
 const Orig = BoardView;
 BoardView = class extends Orig { constructor(c, o) { super(c, o); window.__bv = this; } render(b, o) { this.__opts = o || {}; return super.render(b, o); } };
