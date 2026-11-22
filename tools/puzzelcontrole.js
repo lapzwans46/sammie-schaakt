@@ -26,6 +26,7 @@
     if (bad.length) return { ok: false, msg: 'Ongeldig: ' + bad.join(', ') };
     const s = Chess.fromFEN(st.fen);
     const g = GOALS[st.goal];
+    if (st.goal === 'stopmate' && !blackMatesIn1({ ...s, turn: 'b', ep: null })) return { ok: false, msg: 'Er is geen matdreiging van zwart' };
     if (!g) return { ok: false, msg: `Onbekend doel '${st.goal}'` };
     const sols = qMoves(Chess.legalMoves(s)).filter((m) => g.ok(Chess.makeMove(s, m), m, st));
     const list = sols.map(san).join(' ');

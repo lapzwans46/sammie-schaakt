@@ -266,6 +266,7 @@ function getBadges() {
     { id: 'w3', icon: '🎓', title: 'Schaakmeester', desc: 'Maak wereld 3 af', test: () => worldDone(3) },
     { id: 'w4', icon: '🔭', title: 'Vooruitdenker', desc: 'Maak wereld 4 af', test: () => worldDone(4) },
     { id: 'w5', icon: '🚀', title: 'Superdenker', desc: 'Maak wereld 5 af', test: () => worldDone(5) },
+    { id: 'w6', icon: '🦊', title: 'Slimme vos', desc: 'Maak wereld 6 af', test: () => worldDone(6) },
     { id: 'win1', icon: '🏆', title: 'Eerste winst', desc: 'Win je eerste potje', test: () => totalWins() >= 1 },
     { id: 'win10', icon: '🥇', title: 'Tien keer gewonnen', desc: 'Win 10 potjes', test: () => totalWins() >= 10 },
     { id: 'puz10', icon: '🧩', title: 'Puzzelaar', desc: 'Los 10 puzzels op', test: () => Store.data.puzzles >= 10 },
@@ -494,15 +495,30 @@ const GOALS = {
       ? 'Mooi! Maar zwart kan jouw stuk pakken.'
       : 'Val twee stukken tegelijk aan!'),
   },
+  /* zwart dreigt schaakmat in één zet: zorg dat het niet meer kan */
+  stopmate: {
+    ok: (s) => !blackMatesIn1(s),
+    wrong: () => 'Oei! Zwart kan nog steeds schaakmat geven.',
+    danger: (s) => { const r = blackMatesIn1(s); return r ? r.to : null; },
+  },
   to: {
     ok: (s, m, step) => m.piece[1] === step.piece && step.squares.includes(Chess.sqName(m.to)),
     wrong: () => 'Bijna! Probeer nog eens.',
   },
 };
 
+/* Kan zwart (aan zet) in één zet schaakmat geven? Geeft die zet terug, of null. */
+function blackMatesIn1(s) {
+  if (s.turn !== 'b') return null;
+  return qMoves(Chess.legalMoves(s)).find((r) => {
+    const n = Chess.makeMove(s, r);
+    return Chess.inCheck(n, 'w') && Chess.gameStatus(n) === 'checkmate';
+  }) || null;
+}
+
 /* =========================================================
    VOORUIT DENKEN: opdrachten van 2 of 3 zetten (goal: 'plan')
-   step.win   'mate' = geef schaakmat, of 'Q'/'R'/... = pak dat zwarte stuk
+   step.win   'mate' = geef schaakmat, 'promo' = promoveer (veilig), of 'Q'/'R'/... = pak dat zwarte stuk
    step.line  ['h1-h8', 'g8-g7', 'h8-a8', ...]: wit, zwart, wit, ... (zwart zet vanzelf)
    step.say   wat Pim zegt na elke zet van zwart
    Schaakmat telt bij een pak-opdracht ook als goed (dat is nog beter).
@@ -513,6 +529,8 @@ const Plan = {
   wins(s, m, win) {
     if (win !== 'mate' && m.captured === 'b' + win) return true;
     const n = Chess.makeMove(s, m);
+    // promoveren: je pion wordt een koningin, en zwart kan haar niet meteen pakken
+    if (win === 'promo' && m.promo && !Chess.isAttacked(n.board, m.to, 'b')) return true;
     // schaakmat kan alleen met schaak: die snelle test eerst
     return Chess.inCheck(n, 'b') && Chess.gameStatus(n) === 'checkmate';
   },
@@ -816,7 +834,8 @@ function Exercise(step, ui) {
       Sound.play('oops');
       const mated = Chess.gameStatus(state) === 'checkmate';
       const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
-      const what = step.win === 'mate' ? 'Zo ontsnapt de koning' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
+      const what = step.win === 'mate' ? 'Zo ontsnapt de koning'
+        : step.win === 'promo' ? 'Zo houdt zwart je pion tegen' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
       ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops');
       let t = 0;
       if (r) {
@@ -1064,14 +1083,16 @@ const PUZZLE_TEXT = {
   hanging: 'Pak een stuk dat niemand beschermt!',
   safe: 'Red je stuk! Zet het op een veilig vakje.',
   fork: 'Val twee stukken tegelijk aan!',
+  stopmate: 'Zwart dreigt schaakmat. Stop het!',
 };
 const PUZZLE_LEVELS = [
   { level: 1, stars: '⭐', title: 'Makkelijk', desc: 'Schaak, mat in één, los stuk pakken, stuk redden', color: 'green' },
-  { level: 2, stars: '⭐⭐', title: 'Moeilijker', desc: 'Vork maken, en twee zetten vooruit denken', color: 'blue' },
-  { level: 3, stars: '⭐⭐⭐', title: 'Superdenker', desc: 'Drie zetten vooruit, en slimme stille zetten', color: 'purple' },
+  { level: 2, stars: '⭐⭐', title: 'Moeilijker', desc: 'Vork, dreiging stoppen, koning en toren, twee zetten vooruit', color: 'blue' },
+  { level: 3, stars: '⭐⭐⭐', title: 'Superdenker', desc: 'Drie zetten vooruit, penning, aftrekschaak, stille zetten', color: 'purple' },
 ];
 /* uit deze lessen komen extra puzzels: les-id -> niveau */
-const PUZZLE_LESSONS = { schaak: 1, mat: 1, los: 1, redden: 1, vork: 2, spies: 2, vork2: 2, mat2: 2, toets2: 2, trap3: 3, jacht: 3, slim3: 3, toets3: 3 };
+const PUZZLE_LESSONS = { schaak: 1, mat: 1, los: 1, redden: 1, vork: 2, spies: 2, vork2: 2, mat2: 2, toets2: 2, trap3: 3, jacht: 3, slim3: 3, toets3: 3,
+  koningtoren: 2, dreiging: 2, pionrace: 2, penning: 3, aftrek: 3 };
 
 function puzzlePool(level = 1) {
   const fromLessons = [];
@@ -1081,7 +1102,7 @@ function puzzlePool(level = 1) {
       if (st.type !== 'goal') continue;
       if (st.goal === 'plan') {
         const n = (st.line.length + 1) / 2;
-        const what = st.win === 'mate' ? 'Geef schaakmat' : `Pak de ${PIECE_NAME_NL[st.win]}`;
+        const what = st.win === 'mate' ? 'Geef schaakmat' : st.win === 'promo' ? 'Breng je pion naar de overkant' : `Pak de ${PIECE_NAME_NL[st.win]}`;
         fromLessons.push({ ...st, text: `${what}! Je hebt ${n} zetten.`, say: st.say });
       } else if (PUZZLE_TEXT[st.goal]) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
     }
@@ -1106,8 +1127,10 @@ function PuzzleChoose() {
           <div class="big-text"><b>${l.title}</b><small>${l.desc}</small></div>
         </button>`).join('')}
     </div>
+    <div class="sheet-link"><button class="btn yellow" id="toSheet">🖨️ Puzzelkaart om te printen</button></div>
   </div>`;
   $('#back').onclick = () => go(Home);
+  $('#toSheet').onclick = () => { Sound.play('tap'); go(PuzzleSheet, last); };
   app.querySelectorAll('.puz-level').forEach((b) => {
     b.onclick = () => {
       Sound.play('tap');

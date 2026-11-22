@@ -15,7 +15,7 @@ Tip: druk op **F11** voor volledig scherm.
 
 ## Wat zit erin
 
-**27 lessen in 5 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
+**32 lessen in 6 werelden.** Alles is meteen open; een groen "Nu!"-label wijst de volgende les aan:
 
 | Wereld | Lessen |
 |---|---|
@@ -24,6 +24,7 @@ Tip: druk op **F11** voor volledig scherm.
 | 3. Slim spelen | losse stukken, red je stuk, de vork, mat-trucjes, een goed begin (met het herdersmatje), schaakmeester-toets |
 | 4. Twee zetten vooruit | schaak en pak!, vork en dan pakken, mat in twee (het trappetje), toets |
 | 5. Drie zetten vooruit | het grote trappetje, koningsjacht, slim pakken in drie, toets |
+| 6. Nog slimmer | koning en toren (mat geven met alleen koning + toren), wat wil zwart? (dreiging stoppen), de penning, aftrekschaak, pion naar de overkant (regel van het vierkant) |
 
 **Vooruit denken (wereld 4 en 5):** Sam doet een zet, zwart zet vanzelf terug, en dan is Sam weer aan de beurt.
 Pim telt mee ("Zet 1 van 3") en vertelt na elke zet van zwart wat er nu moet. Elke les begint met een filmpje
@@ -65,12 +66,16 @@ die waarschuwt als Sam zomaar een stuk weggeeft ("Weet je het zeker?").
 | Niveau | Wat | Aantal |
 |---|---|---|
 | ⭐ Makkelijk | schaak geven, mat in één, los stuk pakken, stuk redden | 40 |
-| ⭐⭐ Moeilijker | vork maken, twee zetten vooruit (schaak en pak, mat in twee) | 39 |
-| ⭐⭐⭐ Superdenker | drie zetten vooruit, en mat in twee met een *stille* eerste zet (géén schaak) | 36 |
+| ⭐⭐ Moeilijker | vork maken, dreiging stoppen, koning en toren, pion naar de overkant, twee zetten vooruit | 52 |
+| ⭐⭐⭐ Superdenker | drie zetten vooruit, penning, aftrekschaak, mat in twee met een *stille* eerste zet | 44 |
+
+**Puzzelkaart:** bij Puzzels > 🖨️ Puzzelkaart: zes puzzels van het gekozen niveau op één A4 (staand),
+met naam, datum, een vakje "Gelukt?" en onderaan de antwoorden. Om aan tafel op een echt bord na te zetten.
+Met 🔀 komen er andere puzzels op.
 
 Een deel komt uit `js/puzzles.js`, de rest automatisch uit de lessen. Geen moeilijke termen.
 
-**Prijzenkast:** 29 prijzen: eerste les, elke wereld (ook wereld 4 en 5), een rondje op Moeilijker en op Superdenker, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
+**Prijzenkast:** 30 prijzen: eerste les, elke wereld (ook wereld 4, 5 en 6), een rondje op Moeilijker en op Superdenker, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
 een sticker per verslagen familielid en "Kampioen van de familie".
 
 **Spelletjes:**

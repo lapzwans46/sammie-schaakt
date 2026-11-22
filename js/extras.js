@@ -682,3 +682,72 @@ function DiplomaView(key) {
   $('#print').onclick = () => { try { window.print(); } catch (e) { /* printen niet mogelijk */ } };
   later(() => { Sound.play('win'); confetti(160); }, 300);
 }
+
+/* ---------------------------------------------------------
+   PUZZELKAART: zes puzzels op één A4 (staand) om aan tafel op een
+   echt bord na te zetten. Met een naamregel en onderaan de antwoorden.
+   --------------------------------------------------------- */
+const PIECE_WORD = { K: 'koning', Q: 'koningin', R: 'toren', B: 'loper', N: 'paard', P: 'pion' };
+function sheetAnswer(p) {
+  const st = { type: 'goal', ...p };
+  const word = (s, str) => {
+    const m = Plan.find(s, str);
+    return m ? `${PIECE_WORD[m.piece[1]]} naar ${str.split('-')[1]}` : str;
+  };
+  if (p.goal === 'plan') {
+    let s = Chess.fromFEN(p.fen);
+    const parts = [];
+    p.line.forEach((mv, i) => {
+      if (i % 2 === 0) parts.push(word(s, mv));
+      s = Chess.makeMove(s, Plan.find(s, mv));
+    });
+    return parts.join(', dan ');
+  }
+  const m = findSolution(st);
+  return m ? `${PIECE_WORD[m.piece[1]]} naar ${Chess.sqName(m.to)}` : '';
+}
+
+function PuzzleSheet(level = 1) {
+  const lv = PUZZLE_LEVELS.find((l) => l.level === level) || PUZZLE_LEVELS[0];
+  const list = shuffle(puzzlePool(level)).slice(0, 6);
+  app.innerHTML = `
+  <div class="screen sheet-screen">
+    <style>@media print { @page { size: A4 portrait; margin: 8mm; } }</style>
+    <div class="topbar no-print">
+      <button class="round-btn" id="back" aria-label="Terug">←</button>
+      <div class="title">Puzzelkaart</div>
+      <button class="btn yellow" id="print">🖨️ Printen</button>
+    </div>
+    <div class="sheet-tools no-print">
+      ${PUZZLE_LEVELS.map((l) => `<button class="btn ${l.level === level ? 'blue' : 'grey'}" data-l="${l.level}">${l.stars} ${l.title}</button>`).join('')}
+      <button class="btn green" id="again">🔀 Andere puzzels</button>
+    </div>
+    <div class="sheet">
+      <div class="sheet-head">
+        <div><b>♞ Puzzelkaart</b> <span>${lv.stars} ${lv.title}</span></div>
+        <div class="sheet-name">Naam: ${playerName()} &nbsp;&nbsp; Datum: ____________</div>
+      </div>
+      <p class="sheet-tip">Zet de puzzel op een echt schaakbord. Wit is aan zet. Kun je hem oplossen?</p>
+      <div class="sheet-grid">
+        ${list.map((p, i) => `
+          <div class="sheet-card">
+            <div class="sheet-q"><b>${i + 1}</b> ${p.text}</div>
+            <div class="sheet-board" data-i="${i}"></div>
+            <div class="sheet-check">Gelukt? ☐</div>
+          </div>`).join('')}
+      </div>
+      <div class="sheet-answers"><b>Antwoorden</b> (niet spieken!): ${list.map((p, i) => `<span><b>${i + 1}.</b> ${sheetAnswer(p)}</span>`).join(' ')}</div>
+    </div>
+  </div>`;
+  app.querySelectorAll('.sheet-board').forEach((el) => {
+    const p = list[+el.dataset.i];
+    const wrap = document.createElement('div');
+    wrap.className = 'board-wrap';
+    el.appendChild(wrap);
+    new BoardView(wrap).render(Chess.fromFEN(p.fen).board, {});
+  });
+  $('#back').onclick = () => go(PuzzleChoose);
+  $('#again').onclick = () => { Sound.play('tap'); go(PuzzleSheet, level); };
+  app.querySelectorAll('.sheet-tools [data-l]').forEach((b) => { b.onclick = () => { Sound.play('tap'); go(PuzzleSheet, +b.dataset.l); }; });
+  $('#print').onclick = () => { try { window.print(); } catch (e) { /* printen niet mogelijk */ } };
+}
