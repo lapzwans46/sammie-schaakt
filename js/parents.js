@@ -24,6 +24,7 @@ function Settings() {
       <section class="card">
         <h3>Spelen</h3>
         <label class="toggle"><input type="checkbox" id="sound" ${s.sound ? 'checked' : ''}> Geluidjes</label>
+        <label class="toggle"><input type="checkbox" id="voice" ${s.voice !== false ? 'checked' : ''}> Pim leest voor (tik op Pim om het nog eens te horen)${Sound.canSpeak() ? '' : ' <small>(dit apparaat heeft geen Nederlandse stem)</small>'}</label>
         <label class="toggle"><input type="checkbox" id="warn" ${s.warn ? 'checked' : ''}> Pas-op-hulp: waarschuwen als een stuk zomaar weggegeven wordt</label>
       </section>
       <section class="card">
@@ -53,6 +54,7 @@ function Settings() {
   $('#toFamily').onclick = () => go(FamilyAdmin);
   $('#toProfiles').onclick = () => go(ProfilesAdmin);
   $('#sound').onchange = (e) => { s.sound = e.target.checked; Store.save(); applySettings(); };
+  $('#voice').onchange = (e) => { s.voice = e.target.checked; Store.save(); applySettings(); if (s.voice) Sound.say('Hoi! Ik lees alles voor.'); };
   $('#warn').onchange = (e) => { s.warn = e.target.checked; Store.save(); };
   $('#bkSave').onclick = async () => {
     const r = await saveBackup();

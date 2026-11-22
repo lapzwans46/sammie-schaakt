@@ -16,7 +16,7 @@ const Store = (() => {
     stats: { skills: {}, lessons: {}, games: [], warn: { shown: 0, ignored: 0, pieces: {} } },
     extra: { raceWins: 0, setups: 0 },   // spelletjes
     diplomas: {},                         // wereld -> datum van het diploma
-    settings: { sound: true, warn: true, board: 'gras', pieces: 'paars' },
+    settings: { sound: true, voice: true, warn: true, board: 'gras', pieces: 'paars' },
   });
   const defG = () => ({
     profiles: [{ id: 'sammie', name: 'Sam', look: JSON.parse(JSON.stringify(FAMILY.player.look)) }],
@@ -205,6 +205,7 @@ function go(screen, ...args) {
   if (screenCleanup) screenCleanup();
   screenCleanup = null;
   closeModal();
+  Sound.hush();
   app.innerHTML = '';
   screen(...args);
   window.scrollTo(0, 0);
@@ -213,6 +214,7 @@ function go(screen, ...args) {
 function applySettings() {
   const s = Store.data.settings;
   Sound.setSound(s.sound);
+  Sound.setVoice(s.voice !== false);
   applyTheme(s.board, s.pieces);
 }
 
@@ -734,6 +736,14 @@ function Exercise(step, ui) {
     const mv = dests.find((m) => m.to === i);
     if (selected !== null && mv) return doMove(mv);
     const p = state.board[i];
+    /* sterren/slaan: je stuk is gekozen, maar je tikt op een ster of zwart stuk waar het niet in één keer heen kan */
+    if (freeMode && selected !== null && (stars.has(i) || (p && p[0] === 'b'))) {
+      view.shake(selected);
+      Sound.play('oops');
+      const name = Pieces.NAMES[state.board[selected][1]];
+      ui.setText(`Daar kan je ${name} niet in één keer heen. Ga eerst naar een ander vakje!`, 'oops');
+      return;
+    }
     if (p && p[0] === 'w' && freeMode && isObstacle(state.board, i)) {
       view.shake(i);
       Sound.play('oops');
@@ -779,6 +789,13 @@ function Exercise(step, ui) {
     if (m.promo) { elater(() => Sound.play('magic'), 250); ui.setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy'); }
 
     if (isPlan) return planMove(m);
+    /* sterren/slaan: het stuk blijft gekozen, dan kun je meteen naar de volgende ster tikken */
+    if (freeMode && !solvedNow(m)) {
+      selected = m.to;
+      dests = qMoves(Chess.legalMoves(state, m.to));
+      if (!dests.length) { selected = null; dests = []; }
+      elater(() => draw(), 260);
+    }
     if (solvedNow(m)) {
       locked = true;
       Stats.skill(step.goal || step.type, wrongCount === 0 && !usedHint);
@@ -873,7 +890,7 @@ function Exercise(step, ui) {
       const mated = Chess.gameStatus(state) === 'checkmate';
       const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
       const what = step.win === 'mate' ? 'Zo ontsnapt de koning'
-        : step.win === 'promo' ? 'Zo houdt zwart je pion tegen' : `Zo redt zwart zijn ${PIECE_NAME_NL[step.win] || 'stuk'}`;
+        : step.win === 'promo' ? 'Zo houdt zwart je pion tegen' : `Nu krijg je de ${PIECE_NAME_NL[step.win] || 'stuk'} niet meer te pakken`;
       ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops');
       let t = 0;
       if (r) {
@@ -929,8 +946,8 @@ function teacherLayout(title, right = '<div class="spacer"></div>') {
     <div class="lesson-body">
       <div class="teacher-col">
         <div class="teacher">
-          <div class="teacher-face bob">${Pieces.svg('wN')}</div>
-          <div class="bubble teacher-bubble"><span id="tText"></span></div>
+          <div class="teacher-face bob" id="tFace">${Pieces.svg('wN')}</div>
+          <div class="bubble teacher-bubble" id="tBubble"><span id="tText"></span>${Sound.canSpeak() ? '<span class="say-again" aria-hidden="true">🔊</span>' : ''}</div>
         </div>
         <div class="actions" id="actions"></div>
       </div>
@@ -939,11 +956,17 @@ function teacherLayout(title, right = '<div class="spacer"></div>') {
   </div>`;
 }
 
+/* Pim zegt iets: in de ballon én hardop (Sam leest nog niet zo goed).
+   Tik op Pim of op de ballon: dan zegt hij het nog een keer. */
 function makeSetText() {
+  const again = () => { const el = $('#tText'); if (el) Sound.say(el.textContent); };
+  if ($('#tBubble')) $('#tBubble').onclick = again;
+  if ($('#tFace')) $('#tFace').onclick = again;
   return (t, mood = '') => {
     const el = $('#tText');
     el.textContent = personal(t);
     el.parentElement.className = 'bubble teacher-bubble ' + mood;
+    Sound.say(el.textContent);
   };
 }
 
@@ -1099,7 +1122,7 @@ function LessonPlayer(li) {
           Sound.play('oops');
           wrong++;
           Stats.lessonWrong(lesson.id);
-          setText('Nee, probeer nog eens!', 'oops');
+          setText(`Nee! Probeer nog eens. ${step.text}`, 'oops');
         }
       };
     });
@@ -1466,6 +1489,7 @@ function Game(oi, human = null) {
     const b = $('#banner');
     b.textContent = text;
     b.className = 'banner show ' + kind;
+    Sound.say(text);
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(() => { b.className = 'banner'; }, 2600);
   }
@@ -1548,6 +1572,8 @@ function Game(oi, human = null) {
     }
     if (Store.data.settings.warn && G.state.turn === me) {
       const next = Chess.makeMove(G.state, m);
+      // Pat terwijl Sam voor staat: dan gooit hij zijn winst weg. Even waarschuwen.
+      if (Chess.gameStatus(next) === 'stalemate' && material(next.board, 'w') > material(next.board, 'b')) return warnStalemate(m);
       if (Chess.gameStatus(next) !== 'checkmate') {
         const gain = m.captured ? AI.VAL[m.captured[1]] : 0;
         const after = Tactics.loss(next);
@@ -1557,6 +1583,35 @@ function Game(oi, human = null) {
       }
     }
     playerMove(m);
+  }
+
+  function material(board, c) {
+    return board.reduce((t, p) => t + (p && p[0] === c && p[1] !== 'K' ? AI.VAL[p[1]] : 0), 0);
+  }
+
+  function warnStalemate(m) {
+    Sound.play('check');
+    G.warns++;
+    Store.data.stats.warn.shown++;
+    Store.save();
+    const k = Chess.findKing(G.state.board, 'b');
+    G.marks = [k];
+    draw();
+    const who = together ? 'zwart' : opp.name;
+    const text = `Pas op! Dan kan ${who} geen zet meer doen. Dat heet pat. Dan is het gelijkspel, en win je niet!`;
+    const m2 = modal(`
+      <div class="modal-avatar">${Pieces.svg('bK')}</div>
+      <h2>Pas op!</h2>
+      <p>Dan kan ${who} geen zet meer doen. Dat heet <b>pat</b>.</p>
+      <p>Dan is het gelijkspel, en win je niet!</p>
+      <p class="small">Tip: laat de koning altijd een vakje over.</p>
+      <div class="modal-buttons">
+        <button class="btn green" id="wOther">Andere zet</button>
+        <button class="btn grey" id="wDo">Toch doen</button>
+      </div>`);
+    Sound.say(text);
+    $('#wOther', m2).onclick = () => { Sound.hush(); closeModal(); G.sel = null; G.dests = []; G.marks = []; draw(); };
+    $('#wDo', m2).onclick = () => { Sound.hush(); closeModal(); G.marks = []; G.ignored++; Store.data.stats.warn.ignored++; Store.save(); playerMove(m); };
   }
 
   function warn(m, danger) {
@@ -1579,6 +1634,7 @@ function Game(oi, human = null) {
         <button class="btn green" id="wOther">Andere zet</button>
         <button class="btn grey" id="wDo">Toch doen</button>
       </div>`);
+    Sound.say(`Pas op! Dan kan ${together ? 'zwart' : opp.name} je ${name} pakken! Weet je het zeker?`);
     $('#wOther', m2).onclick = () => { closeModal(); G.sel = null; G.dests = []; G.marks = []; draw(); };
     $('#wDo', m2).onclick = () => { closeModal(); G.marks = []; G.ignored++; Store.data.stats.warn.ignored++; Store.save(); playerMove(m); };
   }
@@ -1672,7 +1728,7 @@ function Game(oi, human = null) {
   }
 
   function undo() {
-    if (G.busy || !G.snaps.length || (G.over && G.result !== 'loss')) return;
+    if (G.busy || !G.snaps.length || (G.over && G.result !== 'loss' && G.result !== 'draw')) return;
     Sound.play('tap');
     G.undos++;
     const s = G.snaps.pop();
@@ -1702,7 +1758,7 @@ function Game(oi, human = null) {
   }
 
   const DRAW_TEXT = {
-    stalemate: 'Pat! Zwart kan geen zet meer doen. Gelijkspel.',
+    stalemate: 'Pat! Zwart kan geen zet meer doen, maar staat niet schaak. Gelijkspel. Tip: laat de koning altijd een vakje over.',
     material: 'Te weinig stukken over. Gelijkspel!',
     fifty: 'Heel lang niks geslagen. Gelijkspel!',
     repetition: 'Steeds dezelfde zetten. Gelijkspel!',
@@ -1766,7 +1822,7 @@ function Game(oi, human = null) {
           ${firstWin && nextOpp ? `<button class="btn orange" id="mNextOpp">Speel tegen ${nextOpp.name} ▶</button>` : ''}
           ${G.history.length >= 6 ? '<button class="btn yellow" id="mReview">🔍 Terugkijken met Pim</button>' : ''}
           <button class="btn green" id="mAgain">Nog een potje</button>
-          ${blackWon && !together ? '<button class="btn blue" id="mUndo">↩️ Zet terug</button>' : ''}
+          ${(blackWon || G.result === 'draw') && !together ? '<button class="btn blue" id="mUndo">↩️ Zet terug</button>' : ''}
           ${firstWin && nextOpp ? '' : `<button class="btn orange" id="mOther">${together ? 'Met iemand anders' : 'Andere tegenstander'}</button>`}
           <button class="btn grey" id="mLook">Bord bekijken</button>
         </div>`, 'celebrate');

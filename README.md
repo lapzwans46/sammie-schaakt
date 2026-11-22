@@ -60,6 +60,8 @@ De ladder is bewust heel mild: het sterkste niveau (11) is even sterk als het vr
 Te makkelijk geworden? Dan kan alles strenger worden afgesteld in `js/ai.js` (bij `LEVELS`).
 Tijdens het spelen: 💡 Tip, ↩️ Terug (zet terugnemen), 🔄 Opnieuw, en de **pas-op-hulp**
 die waarschuwt als Sam zomaar een stuk weggeeft ("Weet je het zeker?").
+De pas-op-hulp waarschuwt ook voor **pat** als Sam voor staat ("Dan is het gelijkspel, en win je niet!").
+Na een gelijkspel mag Sam ook een zet terugnemen.
 
 **Puzzels:** rondjes van 5 puzzels. Sam kiest eerst hoe moeilijk (de laatste keuze wordt onthouden):
 
@@ -88,6 +90,13 @@ twee momenten om van te leren (een los stuk, een gemiste kans of een gemist scha
 **Diploma's:** per afgeronde wereld een feestelijk diploma (vlaggetjes, lint, medaille), plus een Meesterdiploma als wereld 1 t/m 3 af zijn.
 Met naam, poppetje en datum. Printen gaat altijd op één A4, liggend: ook als de printer toch staand print
 (dan draait het diploma vanzelf een kwartslag) en ook als de printer eigen randen aanhoudt (dan schaalt het mee).
+
+**Voorlezen:** Pim leest alles wat hij zegt hardop voor (met de Nederlandse stem van het apparaat, zonder internet).
+Tik op Pim of zijn tekstballon om het nog eens te horen. Ook de meldingen in een potje ("Schaak!", "Pas op!") worden voorgelezen.
+Uitzetten kan bij ⚙️ > Pim leest voor. Heeft het apparaat geen Nederlandse stem, dan blijft het stil.
+
+**Sterren pakken:** na een zet blijft je stuk gekozen, dus je kunt meteen naar de volgende ster tikken.
+Tik je op een ster waar het stuk niet in één keer heen kan, dan legt Pim dat uit.
 
 **Kleuren:** met 🎨 linksboven kiest Sam zelf de kleuren van het bord (7 stuks) en van de stukken (5 stuks).
 Alles is meteen te kiezen; er hoeft niks verdiend te worden.

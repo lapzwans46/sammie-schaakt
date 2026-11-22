@@ -210,6 +210,12 @@ button:disabled { opacity: .45; cursor: default; }
 .teacher-bubble.happy::before { border-bottom-color: #e7ffe9; }
 .teacher-bubble.oops { background: #fff0e6; }
 .teacher-bubble.oops::before { border-bottom-color: #fff0e6; }
+/* voorlezen: tik op de ballon of op Pim om het nog eens te horen */
+.teacher-bubble, .teacher-face { cursor: pointer; }
+.say-again {
+  position: absolute; right: 10px; bottom: 6px;
+  font-size: 1rem; opacity: .55; pointer-events: none;
+}
 .actions { display: flex; justify-content: center; gap: 12px; min-height: 70px; align-items: center; }
 .stage { display: flex; justify-content: center; align-items: center; }
 
