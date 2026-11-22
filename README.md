@@ -60,9 +60,17 @@ Te makkelijk geworden? Dan kan alles strenger worden afgesteld in `js/ai.js` (bi
 Tijdens het spelen: 💡 Tip, ↩️ Terug (zet terugnemen), 🔄 Opnieuw, en de **pas-op-hulp**
 die waarschuwt als Sam zomaar een stuk weggeeft ("Weet je het zeker?").
 
-**Puzzels:** rondjes van 5 makkelijke puzzels: schaak geven, schaakmat in één zet, een los stuk pakken of een stuk in veiligheid brengen. Geen moeilijke termen.
+**Puzzels:** rondjes van 5 puzzels. Sam kiest eerst hoe moeilijk (de laatste keuze wordt onthouden):
 
-**Prijzenkast:** 25 prijzen: eerste les, elke wereld, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
+| Niveau | Wat | Aantal |
+|---|---|---|
+| ⭐ Makkelijk | schaak geven, mat in één, los stuk pakken, stuk redden | 40 |
+| ⭐⭐ Moeilijker | vork maken, twee zetten vooruit (schaak en pak, mat in twee) | 39 |
+| ⭐⭐⭐ Superdenker | drie zetten vooruit, en mat in twee met een *stille* eerste zet (géén schaak) | 36 |
+
+Een deel komt uit `js/puzzles.js`, de rest automatisch uit de lessen. Geen moeilijke termen.
+
+**Prijzenkast:** 29 prijzen: eerste les, elke wereld (ook wereld 4 en 5), een rondje op Moeilijker en op Superdenker, eerste winst, 10 keer winst, puzzels, puzzel van de dag, pionnenrace, bord opzetten, samen spelen,
 een sticker per verslagen familielid en "Kampioen van de familie".
 
 **Spelletjes:**

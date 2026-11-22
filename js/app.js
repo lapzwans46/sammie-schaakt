@@ -264,10 +264,14 @@ function getBadges() {
     { id: 'w1', icon: '♞', title: 'Stukkenkenner', desc: 'Maak wereld 1 af', test: () => worldDone(1) },
     { id: 'w2', icon: '📜', title: 'Regelbaas', desc: 'Maak wereld 2 af', test: () => worldDone(2) },
     { id: 'w3', icon: '🎓', title: 'Schaakmeester', desc: 'Maak wereld 3 af', test: () => worldDone(3) },
+    { id: 'w4', icon: '🔭', title: 'Vooruitdenker', desc: 'Maak wereld 4 af', test: () => worldDone(4) },
+    { id: 'w5', icon: '🚀', title: 'Superdenker', desc: 'Maak wereld 5 af', test: () => worldDone(5) },
     { id: 'win1', icon: '🏆', title: 'Eerste winst', desc: 'Win je eerste potje', test: () => totalWins() >= 1 },
     { id: 'win10', icon: '🥇', title: 'Tien keer gewonnen', desc: 'Win 10 potjes', test: () => totalWins() >= 10 },
     { id: 'puz10', icon: '🧩', title: 'Puzzelaar', desc: 'Los 10 puzzels op', test: () => Store.data.puzzles >= 10 },
     { id: 'puz50', icon: '🧠', title: 'Puzzelkoning', desc: 'Los 50 puzzels op', test: () => Store.data.puzzles >= 50 },
+    { id: 'lvl2', icon: '💪', title: 'Moeilijk rondje', desc: 'Maak een puzzelrondje op Moeilijker', test: () => (Store.data.extra.rounds2 || 0) >= 1 },
+    { id: 'lvl3', icon: '🦉', title: 'Slimme uil', desc: 'Maak een puzzelrondje op Superdenker', test: () => (Store.data.extra.rounds3 || 0) >= 1 },
     { id: 'daily3', icon: '📅', title: 'Dagpuzzelaar', desc: 'Doe 3 keer de puzzel van de dag', test: () => dailyDone() >= 3 },
     { id: 'daily10', icon: '🌟', title: 'Dagpuzzel-ster', desc: 'Doe 10 keer de puzzel van de dag', test: () => dailyDone() >= 10 },
     { id: 'race1', icon: '🏁', title: 'Pionnenkampioen', desc: 'Win een pionnenrace', test: () => Store.data.extra.raceWins >= 1 },
@@ -356,7 +360,7 @@ function Home() {
   </div>`;
   $('#toLessons').onclick = () => { Sound.play('tap'); go(LessonMap); };
   $('#toPlay').onclick = () => { Sound.play('tap'); go(ChooseOpponent); };
-  $('#toPuzzles').onclick = () => { Sound.play('tap'); go(Puzzles); };
+  $('#toPuzzles').onclick = () => { Sound.play('tap'); go(PuzzleChoose); };
   $('#toPrizes').onclick = () => { Sound.play('tap'); go(Prizes); };
   $('#toDaily').onclick = () => { Sound.play('tap'); go(DailyPuzzle); };
   $('#toGames').onclick = () => { Sound.play('tap'); go(MiniGames); };
@@ -1013,39 +1017,77 @@ function LessonPlayer(li) {
 /* =========================================================
    PUZZELS
    ========================================================= */
-/* Puzzels zijn bewust makkelijk: alleen deze soorten, met simpele woorden. */
+/* Puzzels in drie niveaus (zie js/puzzles.js). Niveau 1 = bewust makkelijk, met simpele woorden. */
 const PUZZLE_TEXT = {
   check: 'Val de zwarte koning aan!',
   mate: 'Geef schaakmat!',
   hanging: 'Pak een stuk dat niemand beschermt!',
   safe: 'Red je stuk! Zet het op een veilig vakje.',
+  fork: 'Val twee stukken tegelijk aan!',
 };
-const PUZZLE_GOALS = Object.keys(PUZZLE_TEXT);
-const PUZZLE_LESSONS = ['schaak', 'mat', 'los', 'redden']; // uit deze lessen komen extra puzzels
+const PUZZLE_LEVELS = [
+  { level: 1, stars: '⭐', title: 'Makkelijk', desc: 'Schaak, mat in één, los stuk pakken, stuk redden', color: 'green' },
+  { level: 2, stars: '⭐⭐', title: 'Moeilijker', desc: 'Vork maken, en twee zetten vooruit denken', color: 'blue' },
+  { level: 3, stars: '⭐⭐⭐', title: 'Superdenker', desc: 'Drie zetten vooruit, en slimme stille zetten', color: 'purple' },
+];
+/* uit deze lessen komen extra puzzels: les-id -> niveau */
+const PUZZLE_LESSONS = { schaak: 1, mat: 1, los: 1, redden: 1, vork: 2, spies: 2, vork2: 2, mat2: 2, toets2: 2, trap3: 3, jacht: 3, slim3: 3, toets3: 3 };
 
-function puzzlePool() {
+function puzzlePool(level = 1) {
   const fromLessons = [];
   for (const l of LESSONS) {
-    if (!PUZZLE_LESSONS.includes(l.id)) continue;
+    if (PUZZLE_LESSONS[l.id] !== level) continue;
     for (const st of l.steps) {
-      if (st.type === 'goal' && PUZZLE_GOALS.includes(st.goal)) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
+      if (st.type !== 'goal') continue;
+      if (st.goal === 'plan') {
+        const n = (st.line.length + 1) / 2;
+        const what = st.win === 'mate' ? 'Geef schaakmat' : `Pak de ${PIECE_NAME_NL[st.win]}`;
+        fromLessons.push({ ...st, text: `${what}! Je hebt ${n} zetten.`, say: st.say });
+      } else if (PUZZLE_TEXT[st.goal]) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
     }
   }
-  return PUZZLES.filter((p) => PUZZLE_GOALS.includes(p.goal)).concat(fromLessons);
+  return PUZZLES.filter((p) => (p.level || 1) === level).concat(fromLessons);
 }
 
-/* Puzzel van de dag: alleen de makkelijkere soorten, zodat het altijd te doen is */
-const dailyPool = () => puzzlePool();
+/* Puzzel van de dag: alleen de makkelijke, zodat het altijd te doen is */
+const dailyPool = () => puzzlePool(1);
 
-function Puzzles() {
-  const pool = puzzlePool();
+/* Kies eerst hoe moeilijk */
+function PuzzleChoose() {
+  const last = Store.data.extra.puzzleLevel || 1;
+  app.innerHTML = `
+  <div class="screen choose">
+    <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Puzzels</div><div class="spacer"></div></div>
+    <p class="choose-sub">Hoe moeilijk wil je het?</p>
+    <div class="puz-levels">
+      ${PUZZLE_LEVELS.map((l) => `
+        <button class="big-btn ${l.color} puz-level ${l.level === last ? 'last' : ''}" data-l="${l.level}">
+          <div class="puz-stars">${l.stars}</div>
+          <div class="big-text"><b>${l.title}</b><small>${l.desc}</small></div>
+        </button>`).join('')}
+    </div>
+  </div>`;
+  $('#back').onclick = () => go(Home);
+  app.querySelectorAll('.puz-level').forEach((b) => {
+    b.onclick = () => {
+      Sound.play('tap');
+      Store.data.extra.puzzleLevel = +b.dataset.l;
+      Store.save();
+      go(Puzzles, +b.dataset.l);
+    };
+  });
+}
+
+function Puzzles(level = 1) {
+  const pool = puzzlePool(level);
+  const lv = PUZZLE_LEVELS.find((l) => l.level === level) || PUZZLE_LEVELS[0];
   const ROUND = 5;
   const round = shuffle(pool).slice(0, Math.min(ROUND, pool.length));
   const results = [];
   let pi = 0;
 
-  app.innerHTML = teacherLayout('Puzzelrondje', '<div class="puzzle-stars" id="pstars"></div>');
-  $('#back').onclick = () => go(Home);
+  app.innerHTML = teacherLayout(`Puzzels: ${lv.title}`, '<div class="puzzle-stars" id="pstars"></div>');
+  $('#back').onclick = () => go(PuzzleChoose);
   const setText = makeSetText();
   const stage = $('#stage');
   const actions = $('#actions');
@@ -1059,7 +1101,8 @@ function Puzzles() {
     drawStars();
     stage.innerHTML = '';
     const p = round[pi];
-    const taskText = `Puzzel ${pi + 1}: ${p.text}`;
+    // bij vooruit-denk-puzzels zet Pim er zelf 'Zet 1 van 2' voor
+    const taskText = p.goal === 'plan' ? p.text : `Puzzel ${pi + 1}: ${p.text}`;
     setText(taskText);
     Exercise({ type: 'goal', ...p }, {
       stage, actions, setText, taskText,
@@ -1078,6 +1121,7 @@ function Puzzles() {
 
   function finish() {
     const stars = results.filter(Boolean).length;
+    if (level >= 2) { Store.data.extra['rounds' + level] = (Store.data.extra['rounds' + level] || 0) + 1; Store.save(); awardBadges(1200); }
     Sound.play('win');
     confetti(stars * 25 + 30);
     const m = modal(`
@@ -1090,7 +1134,7 @@ function Puzzles() {
         <button class="btn green" id="mAgain">Nog een rondje</button>
         <button class="btn grey" id="mHome">Naar huis</button>
       </div>`, 'celebrate');
-    $('#mAgain', m).onclick = () => go(Puzzles);
+    $('#mAgain', m).onclick = () => go(Puzzles, level);
     $('#mHome', m).onclick = () => go(Home);
   }
 
@@ -1138,7 +1182,7 @@ function DailyPuzzle() {
           <p>Morgen is er een nieuwe puzzel.</p>
           <div class="modal-buttons"><button class="btn green" id="mHome">Naar huis</button><button class="btn blue" id="mMore">Meer puzzels</button></div>`, 'celebrate');
         $('#mHome', m).onclick = () => go(Home);
-        $('#mMore', m).onclick = () => go(Puzzles);
+        $('#mMore', m).onclick = () => go(PuzzleChoose);
         awardBadges(900);
       }, 900);
     },

@@ -100,7 +100,10 @@
     else if (st.type === 'stars' || st.type === 'capture') r = checkFree(st);
     if (r) rows.push({ where: `Les ${li + 1} (${l.title}), stap ${si + 1}`, kind: st.demoWin ? 'filmpje' : (st.goal === 'plan' ? `plan-${st.win}` : st.goal || st.type), text: st.text, ...r });
   }));
-  PUZZLES.forEach((p, i) => rows.push({ where: `Puzzel ${i + 1}`, kind: p.goal, text: p.text, ...checkGoal(p) }));
+  PUZZLES.forEach((p, i) => rows.push({
+    where: `Puzzel ${i + 1} (niveau ${p.level || 1})`, kind: p.goal === 'plan' ? `plan-${p.win}` : p.goal, text: p.text,
+    ...(p.goal === 'plan' ? checkPlan(p.fen, p.line, p.win, p.say) : checkGoal(p)),
+  }));
 
   const fout = rows.filter((r) => !r.ok);
   const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));

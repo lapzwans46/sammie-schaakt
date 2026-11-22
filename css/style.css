@@ -1003,5 +1003,19 @@ html, body { overscroll-behavior: none; }
   }
 }
 
+/* puzzels: kies hoe moeilijk */
+.puz-levels { display: grid; gap: 22px; width: 100%; max-width: 640px; margin: 0 auto; }
+.puz-level { justify-content: flex-start; width: 100%; }
+.puz-level.last { outline: 5px solid #fff; outline-offset: 3px; }
+.puz-stars { flex: none; width: 120px; text-align: center; font-size: 1.9rem; letter-spacing: -2px; }
+.puz-level { min-width: 0; box-sizing: border-box; }
+.puz-level .big-text { min-width: 0; }
+@media (max-width: 520px) {
+  .puz-level { padding: 14px 14px; gap: 10px; }
+  .puz-stars { width: 64px; font-size: 1.15rem; letter-spacing: -3px; }
+  .puz-level .big-text b { font-size: 1.6rem; }
+  .puz-level .big-text small { font-size: .9rem; }
+}
+
 /* iPad: stukken niet als plaatje laten 'oppakken' door het systeem */
 .piece, .piece-svg, .board svg { -webkit-user-drag: none; user-drag: none; -webkit-touch-callout: none; }
