@@ -5,12 +5,16 @@
   /* GENOEG KEUS: het bord mag het antwoord niet weggeven. Bij elke zet die Sam moet doen:
      - wit heeft minstens 8 verschillende zetten (er is echt iets fout te doen);
      - het stuk van de oplossing heeft minstens 3 vakjes (aantikken verraadt het antwoord niet).
-       Een pion is de uitzondering: die kan nu eenmaal alleen vooruit. */
+       Een pion is de uitzondering: die kan nu eenmaal alleen vooruit.
+     Staat wit schaak, dan is een keus uit minstens 2 zetten genoeg (eerst de koning redden is schaak). */
   const NO_CHOICE_RULE = ['to', 'castle', 'escape']; // uitleg-opdrachten
   const nDests = (s, from) => new Set(Chess.legalMoves(s, from).map((m) => m.to)).size;
   const nTotal = (s) => new Set(Chess.legalMoves(s).map(Plan.moveStr)).size;
   const choiceProblem = (s, m) => {
     const t = nTotal(s), d = nDests(s, m.from);
+    // Uitzondering: staat wit schaak (bv. zwart pakte met schaak), dan moet hij eerst zijn koning redden.
+    // Dat is schaak; dan is minstens een keus uit 2 zetten genoeg.
+    if (Chess.inCheck(s, 'w')) return t < 2 ? 'maar één zet mogelijk' : null;
     if (t < 8) return `te weinig keus: wit heeft maar ${t} zetten (minstens 8)`;
     if (m.piece[1] !== 'P' && d < 3) return `verraadt het antwoord: het stuk heeft maar ${d} vakje(s) (minstens 3)`;
     return null;
@@ -96,6 +100,12 @@
       }
       const r = Plan.find(s2, line[2 * k + 1]);
       if (!r) return { ok: false, msg: `zwart kan ${line[2 * k + 1]} niet zetten` };
+      // SLIM: zwart moet het slimste antwoord spelen (langst volhouden, dan minste materiaal verliezen)
+      const best = Plan.bestReply(s2, left - 1, win);
+      const mine = Plan.whiteOutcome(Chess.makeMove(s2, r), left - 1, win);
+      if (best && mine && (mine.dist < best.dist || (mine.dist === best.dist && mine.mat > best.mat))) {
+        return { ok: false, msg: `zet ${k + 1}: zwart speelt dom (${line[2 * k + 1]}); slimmer is ${Plan.moveStr(best.r)}` };
+      }
       s = Chess.makeMove(s2, r);
       if (left - 2 >= 1 && Plan.forced(s, left - 2, win)) return { ok: false, msg: `zwart ${line[2 * k + 1]} verliest sneller: kies een beter antwoord` };
     }

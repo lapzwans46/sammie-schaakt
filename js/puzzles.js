@@ -80,7 +80,7 @@ const PUZZLES = [
   { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: '8/1p6/8/2R5/3N2K1/k7/8/1q6 w - - 0 1', line: ['c5-a5', 'a3-b4', 'a5-b5', 'b4-a4', 'b5-b1'], say: ['Goed! En nu?', 'Nog één zet!'] },
   { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: '6k1/2p4q/3R4/6K1/8/8/8/N7 w - - 0 1', line: ['d6-d8', 'g8-f7', 'd8-d7', 'f7-e8', 'd7-h7'], say: ['Goed! En nu?', 'Nog één zet!'] },
   { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: '2q5/3p1R2/2N5/8/k7/8/K7/8 w - - 0 1', line: ['f7-f4', 'a4-b5', 'c6-a7', 'b5-a6', 'a7-c8'], say: ['Goed! En nu?', 'Nog één zet!'] },
-  { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: '5K2/q7/8/7k/p7/8/2B3Q1/8 w - - 0 1', line: ['g2-g6', 'h5-h4', 'g6-h7', 'h4-g5', 'h7-a7'], say: ['Goed! En nu?', 'Nog één zet!'] },
+  { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: '5K2/q7/8/7k/p7/8/2B3Q1/8 w - - 0 1', line: ['g2-g6', 'h5-h4', 'g6-h7', 'a7-h7', 'c2-h7'], say: ['Goed! En nu?', 'Nog één zet!'] },
   { level: 3, goal: 'plan', win: 'Q', text: 'Pak de koningin! Je hebt 3 zetten.', fen: 'B1k2q2/8/8/8/K4p2/8/6Q1/8 w - - 0 1', line: ['g2-b7', 'c8-d8', 'b7-b8', 'd8-d7', 'b8-f8'], say: ['Goed! En nu?', 'Nog één zet!'] },
   // twee zetten, maar de eerste zet is GEEN schaak (een stille zet)
   { level: 3, goal: 'plan', win: 'mate', text: 'Mat in 2! Tip: de eerste zet is géén schaak.', fen: 'k7/7p/8/1pK5/8/6Q1/8/8 w - - 0 1', line: ['c5-b6', 'h7-h6', 'g3-g8'], say: ['Slim! Nu schaakmat!'] },

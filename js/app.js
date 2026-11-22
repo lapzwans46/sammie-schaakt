@@ -571,15 +571,44 @@ const Plan = {
     for (let k = 1; k <= max; k++) if (Plan.forced(s, k, win)) return k;
     return max + 1;
   },
-  /* zwart kiest zelf: het antwoord waarna wit het langst nodig heeft (bij gelijk: liefst de koning) */
-  defend(s2, max, win) {
-    let best = null, bestD = -1;
-    for (const r of Chess.legalMoves(s2)) {
-      const d = Plan.distance(Chess.makeMove(s2, r), max, win);
-      if (d > bestD || (d === bestD && r.piece[1] === 'K' && best.piece[1] !== 'K')) { best = r; bestD = d; }
+  /* SLIMME ZWARTE ZETTEN. Zwart kiest het antwoord waarmee hij
+     1. het langst volhoudt, en dan
+     2. het minste materiaal verliest (uitgerekend tot het eind; wit doet steeds zijn beste zet).
+     Zo offert zwart nooit zomaar iets weg: een vastgezette koningin pakt liever nog een loper mee. */
+  VAL: { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 },
+  material: (s) => s.board.reduce((t, p) => (p ? t + (p[0] === 'w' ? 1 : -1) * Plan.VAL[p[1]] : t), 0), // wit min zwart
+  /* wit aan zet met k zetten: { dist, mat } als wit zijn (eerste) goede zet doet */
+  whiteOutcome(s, k, win) {
+    const m = Plan.firstGood(s, k, win);
+    if (!m) return null;
+    const s2 = Chess.makeMove(s, m);
+    if (Plan.wins(s, m, win)) return { dist: 1, mat: Plan.material(s2) };
+    const b = Plan.bestReply(s2, k - 1, win);
+    return b ? { dist: b.dist + 1, mat: b.mat } : null;
+  },
+  /* zwart aan zet, wit heeft daarna nog k zetten: het slimste antwoord { r, dist, mat } */
+  bestReply(s2, k, win) {
+    // eerst (snel) hoe lang elk antwoord volhoudt; alleen voor de langste het materiaal uitrekenen
+    const opts = Chess.legalMoves(s2).map((r) => ({ r, s3: Chess.makeMove(s2, r) }));
+    if (!opts.length) return null;
+    opts.forEach((o) => { o.d = k >= 1 ? Plan.distance(o.s3, k, win) : 99; });
+    const maxD = Math.max(...opts.map((o) => o.d));
+    if (maxD > k) return { r: opts.find((o) => o.d === maxD).r, dist: 99, mat: -99 }; // ontsnapt helemaal
+    let best = null;
+    for (const o of opts.filter((x) => x.d === maxD)) {
+      const w = Plan.whiteOutcome(o.s3, k, win);
+      const c = { r: o.r, dist: w ? w.dist : 99, mat: w ? w.mat : -99 };
+      if (!best || c.dist > best.dist || (c.dist === best.dist && c.mat < best.mat)) best = c;
     }
     return best;
   },
+  /* de eerste goede zet voor wit (schaakzetten eerst; in een puzzel is er toch maar één) */
+  firstGood(s, k, win) {
+    const ms = Chess.legalMoves(s).sort((a, b) => (b.promo === 'Q') - (a.promo === 'Q'));
+    if (k > 1) ms.sort((a, b) => Plan.isCheck(s, b) - Plan.isCheck(s, a));
+    return ms.find((m) => Plan.good(s, m, k, win)) || null;
+  },
+  defend(s2, max, win) { const b = Plan.bestReply(s2, max, win); return b ? b.r : null; },
 };
 
 /* Zoek een goede oplossing (voor de hulp na twee keer fout) */

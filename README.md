@@ -175,7 +175,11 @@ Die controleert met de regels van de app zelf dat:
   en dat de filmpjes kloppen;
 - alle sterren- en sla-opdrachten te doen zijn.
 - het bord het antwoord **niet weggeeft**: bij elke zet die Sam moet doen heeft wit minstens 8 verschillende zetten,
-  en het stuk van de oplossing minstens 3 vakjes (een pion uitgezonderd). Zo kun je echt een fout maken.
+  en het stuk van de oplossing minstens 3 vakjes (een pion uitgezonderd). Zo kun je echt een fout maken. Staat wit schaak,
+  dan is een keus uit 2 zetten genoeg (eerst je koning redden hoort bij schaak);
+- zwart **slim** speelt: hij houdt zo lang mogelijk vol en verliest daarna zo weinig mogelijk materiaal.
+  Een vastgezette koningin pakt dus liever nog een loper mee dan dat ze voor niks verloren gaat.
+  Ook als Sam een omweg kiest, verdedigt zwart zich zo.
 
 Bovenaan staat een groen vinkje of een rode lijst met wat er niet klopt.
 
