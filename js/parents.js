@@ -219,8 +219,10 @@ function FamilyAdmin() {
   $('#addOpp').onclick = () => {
     AvatarEditor({
       title: 'Nieuwe tegenstander',
-      person: { name: 'Nieuw', level: 3, look: { skin: '#f7d3b5', hair: '#4a2f1b', hairStyle: 'short', shirt: '#2ec4b6' } },
+      person: { name: '', level: 3, look: { skin: '#f7d3b5', hair: '#4a2f1b', hairStyle: 'short', shirt: '#2ec4b6' } },
       canRename: true,
+      placeholder: 'Typ een naam',
+      fallbackName: 'Nieuw',
       showLevel: true,
       onSave: (p) => {
         Store.global.custom = Store.global.custom || [];

@@ -293,7 +293,7 @@ button:disabled { opacity: .45; cursor: default; }
 @keyframes twinkle { 50% { transform: scale(1.15) rotate(8deg); } }
 .burst { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--bs) * .1); color: var(--yellow); z-index: 6; animation: burst .7s ease-out forwards; pointer-events: none; }
 @keyframes burst { to { transform: scale(2.6) translateY(-30%); opacity: 0; } }
-.coord { position: absolute; font-size: calc(var(--bs) * .022); font-weight: 900; opacity: .55; z-index: 1; }
+.coord { position: absolute; font-size: calc(var(--bs) * .03); font-weight: 900; opacity: .9; z-index: 1; line-height: 1; }
 .coord.rank { top: 3px; left: 4px; }
 .coord.file { bottom: 2px; right: 5px; }
 .sq.light .coord { color: #5d9a4e; }
@@ -525,7 +525,7 @@ button:disabled { opacity: .45; cursor: default; }
 .badge-emoji.mystery { background: var(--grey); color: #fff; font-weight: 900; }
 .badge-avatar { width: 84px; }
 .toast {
-  position: fixed; top: 16px; left: 50%; z-index: 300;
+  position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; z-index: 300; /* onderin: niet over de beker of Pim heen */
   transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
   background: #fff; border: 4px solid var(--yellow); border-radius: 22px; padding: 8px 20px 8px 10px;
   box-shadow: 0 8px 0 #e3b52c, 0 14px 30px rgba(0, 0, 0, .2);
@@ -535,8 +535,8 @@ button:disabled { opacity: .45; cursor: default; }
 .toast .badge-emoji { height: 60px; }
 .toast small { display: block; font-weight: 800; color: var(--orange-d); }
 .toast b { font-size: 1.3rem; }
-.toast.out { transition: opacity .4s, transform .4s; opacity: 0; transform: translate(-50%, -30px); }
-@keyframes toastin { from { transform: translate(-50%, -80px); } }
+.toast.out { transition: opacity .4s, transform .4s; opacity: 0; transform: translate(-50%, 30px); }
+@keyframes toastin { from { transform: translate(-50%, 120px); } }
 
 /* ladder */
 .opp-card { position: relative; }
@@ -706,8 +706,8 @@ button.hero-avatar { padding: 0; }
    ========================================================= */
 /* bord volgt het gekozen kleurthema */
 .board-wrap { box-shadow: 0 8px 0 var(--frame-d, #5f3c26), 0 18px 30px rgba(0, 0, 0, .2); }
-.sq.light .coord { color: var(--dark-sq); }
-.sq.dark .coord { color: var(--light-sq); }
+.sq.light .coord { color: var(--dark-sq); color: color-mix(in srgb, var(--dark-sq) 60%, #000); }
+.sq.dark .coord { color: var(--light-sq); color: color-mix(in srgb, var(--light-sq) 80%, #fff); }
 
 /* startscherm: zes knoppen */
 .corner-btn.left { right: auto; left: 14px; }
@@ -1059,16 +1059,23 @@ html, body { overscroll-behavior: none; }
 /* liggend: het bord staat in het midden (net als bij een potje); Pim en de knoppen beginnen
    bovenaan, en extra's (quiz, stukkenbak) groeien naar beneden */
 .lesson .teacher-col { align-self: start; padding-top: 12px; }
-.lesson .teacher-bubble { min-height: 150px; display: flex; align-items: center; }
+.lesson .teacher-bubble { min-height: 0; height: 150px; display: flex; align-items: center; }
+#tText { display: block; }
 .lesson .actions { align-items: flex-start; flex-wrap: wrap; }
 /* alle knoppen onder Pim even groot, op twee vaste plekken:
    links 'Opnieuw' / 'Nog eens', rechts 'Hint' / 'Verder'. Zo komt 'Verder' precies waar 'Hint' stond. */
-.lesson .actions { display: grid; grid-template-columns: repeat(2, 180px); justify-content: center; column-gap: 12px; row-gap: 12px; }
+.lesson .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 180px)); justify-content: center; column-gap: 12px; row-gap: 12px; }
 .lesson .actions > .btn { width: 100%; height: 60px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; grid-row: 1; font-size: 1.25rem; white-space: nowrap; }
 .lesson .actions > #again, .lesson .actions > #replay { grid-column: 1; }
-.lesson .actions > #hintBtn, .lesson .actions > #next { grid-column: 2; }
+.lesson .actions > #hintBtn, .lesson .actions > #next, .lesson .actions > #done { grid-column: 2; }
+.lesson .actions > #reveal { grid-column: 1; white-space: normal; line-height: 1.1; font-size: 1.05rem; }
 .lesson .actions > .quiz { grid-column: 1 / -1; }
-@media (max-width: 520px) { .lesson .actions { grid-template-columns: repeat(2, 150px); } .lesson .actions > .btn { font-size: 1.05rem; } }
+/* smalle kolom naast het bord (bijv. iPad liggend 1024x768): knoppen krimpen mee en vallen niet buiten beeld */
+@media (orientation: landscape) and (max-width: 1100px) {
+  .lesson .actions > .btn { font-size: 1.1rem; }
+  .lesson .quiz { --qw: 150px; --qh: 140px; --qp: 52px; gap: 12px; }
+}
+@media (max-width: 520px) { .lesson .actions { grid-template-columns: repeat(2, minmax(0, 150px)); } .lesson .actions > .btn { font-size: 1.05rem; } }
 /* telefoon staand: Pims rij even hoog als die van de tegenstander bij een potje (92px) */
 @media (orientation: portrait) and (max-width: 520px) { .lesson .lesson-body { grid-template-rows: 92px auto 64px 104px; } .lesson .teacher-bubble.bubble { height: 88px; } }
 @media (orientation: portrait) {
@@ -1147,4 +1154,45 @@ html, body { overscroll-behavior: none; }
 @media (max-width: 520px) {
   .topbar .progress, .topbar .hearts { width: 64px; }
   .topbar .hearts { font-size: .95rem; letter-spacing: 0; }
+}
+
+/* =========================================================
+   TELEFOON DWARS (laag, liggend scherm): alles compacter,
+   zodat het bord en de knoppen in beeld passen zonder te schuiven.
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 500px) {
+  .screen { padding: max(6px, env(safe-area-inset-top)) 12px max(6px, env(safe-area-inset-bottom)); }
+  .topbar { margin-bottom: 6px; gap: 10px; height: 40px; }
+  .topbar .title { font-size: 1.2rem; }
+  .round-btn { width: 40px; height: 40px; font-size: 1.3rem; }
+  #soundBtn.round-btn { font-size: 1.1rem; }
+  .board-wrap { --bs: min(calc(100vh - 64px), calc(100vw - 330px), 720px); }
+
+  /* les, puzzel, spelletje: Pim naast zijn ballon */
+  .lesson-body { gap: 12px; }
+  .lesson .teacher-col { padding-top: 0; gap: 8px; }
+  .teacher { flex-direction: row; align-items: center; }
+  .teacher-face { width: 56px; height: 56px; padding: 6px; flex: none; }
+  .lesson .teacher-bubble { height: 96px; font-size: 1rem; padding: 8px 12px; }
+  .teacher-bubble::before { top: 50%; left: -14px; margin: -12px 0 0; border: 12px solid transparent; border-right: 16px solid #fff; border-left: 0; }
+  .teacher-bubble.happy::before { border-right-color: #e7ffe9; border-bottom-color: transparent; }
+  .teacher-bubble.oops::before { border-right-color: #fff0e6; border-bottom-color: transparent; }
+  .lesson .actions { min-height: 0; row-gap: 8px; }
+  .lesson .actions > .btn { height: 46px; font-size: 1rem; }
+  .lesson .quiz { --qw: 120px; --qh: 76px; --qp: 26px; gap: 8px; }
+  .teacher-col .tray { gap: 3px; padding: 4px; }
+  .teacher-col .tray-piece { width: 36px; height: 36px; }
+
+  /* potje */
+  .game-body { gap: 10px; }
+  .side { gap: 8px; }
+  .player-card { padding: 4px 8px 4px 4px; border-radius: 16px; gap: 8px; }
+  .pc-avatar { width: 44px; }
+  .pc-name { font-size: 1.05rem; }
+  .captured { min-height: 20px; }
+  .captured span { width: 18px; height: 18px; }
+  .opp-bubble { font-size: .9rem; padding: 6px 10px; }
+  .turn { font-size: 1rem; padding: 6px; }
+  .tool { padding: 4px 2px; font-size: .8rem; border-radius: 14px; }
+  .tool .ti { font-size: 1.2rem; }
 }

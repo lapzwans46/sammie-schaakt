@@ -1,7 +1,9 @@
 /* =========================================================
    Sammie Schaakt! - poppetjesmaker
    AvatarEditor({ title, person: {name, look, level?}, canRename, showLevel,
-                  onSave(person), onCancel(), onReset(), onDelete() })
+                  placeholder, fallbackName, onSave(person), onCancel(), onReset(), onDelete() })
+   placeholder: grijze voorbeeldtekst als de naam nog leeg is (nieuwe speler).
+   fallbackName: naam als er niks is ingevuld.
    ========================================================= */
 const EDIT_OPTIONS = {
   hairStyles: [
@@ -15,6 +17,16 @@ const EDIT_OPTIONS = {
     ['glasses', 'Bril'], ['mustache', 'Snor'], ['beard', 'Baard'], ['freckles', 'Sproetjes'],
     ['bow', 'Strikje'], ['earrings', 'Oorbellen'], ['necklace', 'Ketting'], ['collar', 'Kraagje'],
   ],
+};
+
+/* Namen van de kleuren (voor voorleessoftware) */
+const COLOR_NAMES = {
+  '#2b2b2b': 'zwart', '#4a2f1b': 'donkerbruin', '#6b3e26': 'bruin', '#8a5a2b': 'lichtbruin', '#a5522b': 'roodbruin',
+  '#e2793a': 'rood', '#c9a15a': 'donkerblond', '#f2c94c': 'blond', '#e4e4e4': 'wit', '#cfcfd8': 'grijs', '#ff5d8f': 'roze',
+  '#4a9df8': 'blauw', '#fde3cf': 'heel licht', '#f7d3b5': 'licht', '#f0c7a2': 'lichtbeige', '#e0ac80': 'beige',
+  '#c68b5e': 'lichtbruin', '#a86b43': 'bruin', '#8a5233': 'donkerbruin', '#5e3820': 'heel donker',
+  '#ff7a45': 'oranje', '#e63946': 'rood', '#ef476f': 'framboos', '#ff70a6': 'roze', '#9b5de5': 'paars', '#4361ee': 'blauw',
+  '#118ab2': 'zeeblauw', '#2ec4b6': 'turquoise', '#3f8f5a': 'groen', '#2d6a4f': 'donkergroen', '#ffcf33': 'geel', '#264653': 'donkerblauw',
 };
 
 /* Korte uitleg per niveau (voor ouders) */
@@ -52,7 +64,7 @@ function AvatarEditor(opts) {
       <div class="editor-preview card">
         <div class="ed-avatar" id="edAvatar"></div>
         <div class="ed-moods" id="edMoods"></div>
-        ${opts.canRename ? `<label class="ed-name">Naam <input class="text-input" id="edName" maxlength="16" value="${p.name}"></label>` : `<div class="ed-title">${p.name}</div>`}
+        ${opts.canRename ? `<label class="ed-name">Naam <input class="text-input" id="edName" maxlength="16" value="${p.name}" placeholder="${opts.placeholder || ''}" autocomplete="off"></label>` : `<div class="ed-title">${p.name}</div>`}
         <div class="ed-buttons">
           <button class="btn green" id="edSave">Opslaan ✓</button>
           ${opts.onReset ? '<button class="btn grey" id="edReset">Standaard terugzetten</button>' : ''}
@@ -70,7 +82,7 @@ function AvatarEditor(opts) {
   app.querySelectorAll('.mood-btn').forEach((b) => { b.onclick = () => { mood = b.dataset.m; preview(); }; });
 
   const swatches = (key, colors) => `<div class="swatches">${colors.map((c) =>
-    `<button class="swatch ${p.look[key] === c ? 'on' : ''}" data-k="${key}" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`;
+    `<button class="swatch ${p.look[key] === c ? 'on' : ''}" data-k="${key}" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[c] || 'kleur'}"></button>`).join('')}</div>`;
 
   function panel() {
     const L = p.look;
@@ -116,11 +128,15 @@ function AvatarEditor(opts) {
 
   $('#back').onclick = () => opts.onCancel();
   $('#edSave').onclick = () => {
-    if (opts.canRename) p.name = cleanName($('#edName').value) || opts.person.name;
+    if (opts.canRename) p.name = cleanName($('#edName').value) || opts.fallbackName || opts.person.name;
     Sound.play('good');
     opts.onSave(p);
   };
-  if ($('#edName')) $('#edName').oninput = (e) => { p.name = e.target.value; };
+  if ($('#edName')) {
+    $('#edName').oninput = (e) => { p.name = cleanName(e.target.value); };
+    // Tikken op een naam die er al staat: alles selecteren, zodat typen de oude naam vervangt
+    $('#edName').onfocus = (e) => { const el = e.target; setTimeout(() => el.select(), 0); };
+  }
   if ($('#edReset')) $('#edReset').onclick = () => ask('Terugzetten naar het standaard-poppetje?', () => opts.onReset());
   if ($('#edDelete')) $('#edDelete').onclick = () => ask(`${p.name} weghalen?`, () => opts.onDelete(), 'Ja, weghalen', 'Nee');
 

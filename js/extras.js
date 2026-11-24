@@ -97,7 +97,7 @@ function MiniGames() {
     <div class="games-grid">
       ${card(P('wP') + P('wP') + P('bP'), 'Pionnenrace 🏁', 'Alleen pionnen! Wie het eerst een pion aan de overkant heeft, wint.', two('race'), `🏆 ${x.raceWins} keer gewonnen`)}
       ${card(P('wR') + P('wK') + P('wN'), 'Bord opzetten 🧱', 'Zet alle stukken op de goede plek, net als aan het begin van een potje.', one('setup'), `✅ ${x.setups} keer gelukt`)}
-      ${card('<span class="gc-emoji">🎯</span>', 'Vakjesjacht', 'Pim noemt een vakje, zoals e4. Kun jij het vinden?', one('hunt'), rec('jacht', (v) => `🎯 Record: ${v} van de 10`))}
+      ${card('<span class="gc-emoji">🎯</span>', 'Vakjesjacht', 'Pim noemt een vakje, zoals e4. Kun jij het vinden?', one('hunt'), rec('jacht6', (v) => `🎯 Record: ${v} van de 6`))}
       ${card(P('wN') + '<span class="gc-emoji">⭐</span>', 'Paardensprong', 'Spring met het paard door het doolhof naar de ster.', one('maze'), rec('doolhof', (v) => `⭐ Record: ${v} sterren`))}
       ${card('<span class="gc-emoji">❓</span>' + P('wB'), 'Wie ben ik?', 'Pim vertelt een raadsel over een stuk. Welk stuk is het?', one('who'), rec('wie', (v) => `🕵️ Record: ${v} van de 8`))}
       ${card(P('wQ') + P('bN'), 'Pim-vangertje', 'Vang het springende paard. Ga niet staan waar het paard jou pakt!', two('catch'), (x.played || {}).vangen ? `🐴 ${(x.played || {}).vangen} keer gevangen` : 'Nog niet gespeeld')}
@@ -304,7 +304,7 @@ const SETUP_TIPS = {
   N: 'Paarden staan naast de torens.',
   B: 'Lopers staan naast de paarden.',
   Q: 'De koningin staat op haar eigen kleur.',
-  K: 'De koning staat naast de koningin.',
+  K: 'De koning staat in het midden, naast de koningin. Hij staat op de andere kleur.',
 };
 
 function BoardSetup() {
@@ -396,12 +396,22 @@ function BoardSetup() {
     }
   }
 
-  function colorDone() {
-    Sound.play('good');
-    confetti(60);
+  function colorDone(skipped = false) {
+    if (!skipped) { Sound.play('good'); confetti(60); }
     if (color === 'w') {
-      setText('Super! Nu de zwarte stukken. Die staan bovenaan.', 'happy');
-      slater(() => { color = 'b'; fillTray(); }, 1800);
+      /* zwart erbij is lang voor een kind: Sam mag zelf kiezen */
+      setText('Super! Wil je ook de zwarte stukken neerzetten?', 'happy');
+      slater(() => {
+        const m = modal(`
+          <h2>Wit staat klaar!</h2>
+          <p>Wil je ook de zwarte stukken neerzetten?</p>
+          <div class="modal-buttons">
+            <button class="btn green" id="mBlack">Ja, zwart ook!</button>
+            <button class="btn grey" id="mStop">Nee, klaar</button>
+          </div>`);
+        $('#mBlack', m).onclick = () => { closeModal(); setText('Nu de zwarte stukken. Die staan bovenaan.'); color = 'b'; fillTray(); };
+        $('#mStop', m).onclick = () => { closeModal(); color = 'b'; colorDone(true); };
+      }, 900);
     } else {
       Store.data.extra.setups++;
       gamePlayed('setup');
@@ -476,12 +486,12 @@ function analyzeGame(history, oppName) {
       moments.push({
         kind: 'missed', score: free.v, idx, nr, h, better: free.x,
         text: `Kijk goed! Hier kon je iets gratis pakken.`,
-        show: `Je kon de ${name(free.x.captured)} gratis pakken met je ${name(free.x.piece)}!`,
+        show: `Je kon ${Pieces.de(name(free.x.captured))} gratis pakken met je ${name(free.x.piece)}!`,
       });
       return;
     }
     if (gain >= 300 && net <= 0) {
-      moments.push({ kind: 'good', score: gain, idx, nr, h, text: `Goed gezien! Je pakte de ${name(m.captured)} van ${oppName}.` });
+      moments.push({ kind: 'good', score: gain, idx, nr, h, text: `Goed gezien! Je pakte ${Pieces.de(name(m.captured))} van ${oppName}.` });
     } else if (!m.captured && Tactics.targets(after, m.to).length >= 2 && lossAfter.loss < 200) {
       moments.push({ kind: 'good', score: 450, idx, nr, h, marks: Tactics.targets(after, m.to), text: 'Twee stukken tegelijk aangevallen. Slim!' });
     } else if (m.flag === 'castleK' || m.flag === 'castleQ') {
@@ -490,7 +500,7 @@ function analyzeGame(history, oppName) {
   });
   const good = moments.filter((x) => x.kind === 'good').sort((a, b) => b.score - a.score).slice(0, 1);
   const learn = moments.filter((x) => x.kind !== 'good').sort((a, b) => b.score - a.score).slice(0, 2).sort((a, b) => a.idx - b.idx);
-  return good.concat(learn);
+  return good.concat(learn).sort((a, b) => a.idx - b.idx); // in de volgorde van het potje
 }
 
 function Review(info) {

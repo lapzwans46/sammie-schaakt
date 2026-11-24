@@ -82,7 +82,7 @@ function SquareHunt() {
   const setText = gameScreen('Vakjesjacht', '<div class="progress"><div class="progress-fill" id="prog"></div></div>');
   const T = gameTimers();
   const view = gameBoard((i) => tap(i));
-  const ROUNDS = 10;
+  const ROUNDS = 6;
   let n, goal, firstTry, good, marks, locked, found;
 
   const draw = () => view.render(new Array(64).fill(null), { marks, stars: found });
@@ -126,7 +126,7 @@ function SquareHunt() {
   }
   function finish() {
     gamePlayed('jacht');
-    const rec = gameBest('jacht', good);
+    const rec = gameBest('jacht6', good); // sinds 6 rondes: nieuw record (de oude was van 10)
     gameEnd({
       trophy: '🎯', title: 'Alle vakjes gevonden!',
       text: `${good} van de ${ROUNDS} in één keer goed.${rec ? ' Nieuw record!' : ''}`,
@@ -313,7 +313,7 @@ const RIDDLES = [
   ['Q', 'Ik ben het sterkst. Ik ben 9 punten waard.'],
   ['R', 'Ik ga alleen recht. Ik lijk op een kasteel.'],
   ['R', 'Aan het begin sta ik in de hoek.'],
-  ['R', 'Ik ben 5 punten waard.'],
+  ['R', 'Ik ga recht, zo ver als ik wil. Ik ben 5 punten waard.'],
   ['B', 'Ik ga alleen schuin. Ik blijf altijd op dezelfde kleur.'],
   ['B', 'Ik heb een puntmuts.'],
   ['N', 'Ik spring als een L.'],
@@ -372,13 +372,13 @@ function WhoAmI() {
       Sound.play('good');
       marks = []; showSq = i;
       draw();
-      setText(`Ja! Ik ben de ${Pieces.NAMES[cur[0]]}! Zo loop ik.`, 'happy');
+      setText(`Ja! Ik ben ${Pieces.de(Pieces.NAMES[cur[0]])}! Zo loop ik.`, 'happy');
       T.later(() => (n >= ROUNDS ? finish() : ask()), 2600);
     } else {
       firstTry = false;
       Sound.play('oops');
       view.shake(i);
-      setText(`Nee, dat is de ${Pieces.NAMES[p[1]]}. ${cur[1]}`, 'oops');
+      setText(`Nee, dat is ${Pieces.de(Pieces.NAMES[p[1]])}. ${cur[1]}`, 'oops');
     }
   }
   function finish() {
@@ -778,9 +778,9 @@ function MiniChess(levelKey) {
     if (sel !== null && mv) {
       if (mv.promo) {
         locked = true;
-        return askPromotion('w', (t) => { locked = false; play({ ...mv, promo: t }); });
+        return askPromotion('w', (t) => { locked = false; tryPlay({ ...mv, promo: t }); });
       }
-      return play(mv);
+      return tryPlay(mv);
     }
     const p = state.board[i];
     if (p && p[0] === 'w') {
@@ -807,6 +807,39 @@ function MiniChess(levelKey) {
     if (st || plies >= 120) { finish('draw', st === 'stalemate' ? 'Pat! Er kan niemand meer zetten.' : 'Er zijn alleen nog koningen, of het duurde heel lang.'); return true; }
     return false;
   }
+  /* Pas-op-hulp (alleen bij makkelijk, en als die aan staat bij Instellingen): net als bij een echt potje */
+  function tryPlay(m) {
+    if (!hard && Store.data.settings.warn) {
+      const next = Chess.makeMove(state, m);
+      if (miniStatus(next) !== 'mate') {
+        const gain = m.captured ? AI.VAL[m.captured[1]] : 0;
+        const after = Tactics.loss(next);
+        const before = Chess.inCheck(state, 'w') ? { loss: 0 } : Tactics.loss({ ...state, turn: 'b', ep: null });
+        const net = after.loss - gain;
+        if (net >= 200 && net > before.loss) return warn(m, after);
+      }
+    }
+    play(m);
+  }
+  function warn(m, danger) {
+    Sound.play('check');
+    const name = Pieces.NAMES[danger.piece[1]];
+    hint = null; sel = null; dests = [];
+    draw();
+    const m2 = modal(`
+      <div class="modal-avatar">${Pieces.svg(danger.piece)}</div>
+      <h2>Pas op!</h2>
+      <p>Dan kan Pim je ${name} pakken!</p>
+      <p class="small">Weet je het zeker?</p>
+      <div class="modal-buttons">
+        <button class="btn green" id="wOther">Andere zet</button>
+        <button class="btn grey" id="wDo">Toch doen</button>
+      </div>`);
+    Sound.say(`Pas op! Dan kan Pim je ${name} pakken! Weet je het zeker?`);
+    $('#wOther', m2).onclick = () => { Sound.hush(); closeModal(); draw(); };
+    $('#wDo', m2).onclick = () => { Sound.hush(); closeModal(); play(m); };
+  }
+
   function play(m) {
     apply(m);
     if (m.promo) setText(`Toverij! Je pion is nu een ${PROMO_NAME[m.promo]}!`, 'happy');
@@ -816,8 +849,8 @@ function MiniChess(levelKey) {
     T.later(() => {
       let pm;
       const ms = miniMoves(state);
-      if (!hard && Math.random() < 0.35) pm = pick(ms);
-      else pm = miniBest(state, hard ? 3 : 1, hard ? 20 : 120);
+      if (!hard && Math.random() < 0.5) pm = pick(ms);
+      else pm = miniBest(state, hard ? 3 : 1, hard ? 20 : 200);
       apply(pm);
       if (ended()) return;
       locked = false;

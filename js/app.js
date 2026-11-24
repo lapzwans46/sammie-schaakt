@@ -360,7 +360,7 @@ function awardBadges(delay = 1500) {
   if (!fresh.length) return;
   fresh.forEach((b) => d.badges.push(b.id));
   Store.save();
-  fresh.forEach((b, i) => setTimeout(() => toast(b), delay + i * 3300));
+  fresh.forEach((b, i) => setTimeout(() => toast(b), delay + i * 5100));
 }
 
 function toast(b) {
@@ -369,8 +369,8 @@ function toast(b) {
   t.innerHTML = `${badgeIcon(b)}<div><small>Nieuwe prijs!</small><b>${b.title}</b></div>`;
   document.body.appendChild(t);
   Sound.play('magic');
-  setTimeout(() => t.classList.add('out'), 2800);
-  setTimeout(() => t.remove(), 3300);
+  setTimeout(() => t.classList.add('out'), 4500);
+  setTimeout(() => t.remove(), 5000);
 }
 
 /* =========================================================
@@ -471,8 +471,10 @@ function WhoPlays() {
 function newProfile(done) {
   AvatarEditor({
     title: 'Nieuwe speler',
-    person: { name: 'Nieuwe speler', look: { skin: '#f7d3b5', hair: '#6b3e26', hairStyle: 'short', shirt: '#4361ee' } },
+    person: { name: '', look: { skin: '#f7d3b5', hair: '#6b3e26', hairStyle: 'short', shirt: '#4361ee' } },
     canRename: true,
+    placeholder: 'Typ je naam',
+    fallbackName: `Speler ${Store.global.profiles.length + 1}`,
     onSave: (p) => {
       const np = Store.addProfile({ name: p.name, look: p.look });
       Store.switchTo(np.id);
@@ -723,6 +725,7 @@ function Exercise(step, ui) {
   let state, stars, selected, dests, last, locked, hint = null, marks = [];
   let wrongCount = 0;
   let usedHint = false;
+  let hintKey = null;
   const task = ui.taskText || step.text;
   /* vooruit denken: welke zet uit step.line is nu aan de beurt, en de stelling op dat moment */
   const isPlan = step.goal === 'plan';
@@ -777,12 +780,21 @@ function Exercise(step, ui) {
     if (!sol) return;
     Sound.play('magic');
     usedHint = true;
-    hint = { from: sol.from, to: sol.to };
+    const name = Pieces.NAMES[sol.piece[1]];
     selected = sol.from;
     dests = qMoves(Chess.legalMoves(state, sol.from));
     marks = [];
+    /* Hint in twee stapjes: eerst alleen wélk stuk, pas bij nog een keer drukken ook het vakje */
+    const key = `${sol.from}-${sol.to}-${wm}-${stars.size}-${state.board.join()}`;
+    if (hintKey !== key) {
+      hintKey = key;
+      hint = null;
+      draw();
+      ui.setText(`Kijk eens naar je ${name}. Waar kan je ${name} heen? Nog een hint? Druk nog eens op 💡.`, 'happy');
+      return;
+    }
+    hint = { from: sol.from, to: sol.to };
     draw();
-    const name = Pieces.NAMES[sol.piece[1]];
     ui.setText(`Tik op je ${name}. Tik dan op het gele vakje!`, 'happy');
   }
 
@@ -824,6 +836,13 @@ function Exercise(step, ui) {
       Sound.play('tap');
       selected = i; dests = ms;
       return draw();
+    }
+    /* stuk gekozen, maar een vakje getikt waar het niet heen kan: laat zien waarom er niks gebeurt */
+    if (selected !== null && state.board[selected]) {
+      const name = Pieces.NAMES[state.board[selected][1]];
+      view.shake(selected);
+      Sound.play('oops');
+      ui.setText(`Daar kan je ${name} niet heen. Kijk naar de stipjes!`, 'oops');
     }
     selected = null; dests = [];
     draw();
@@ -873,10 +892,12 @@ function Exercise(step, ui) {
       if (ui.lessonId) Stats.lessonWrong(ui.lessonId);
       const g = GOALS[step.goal];
       if (g.danger) { const d = g.danger(state); if (d !== null) { marks = [d]; draw(); } }
-      elater(() => { Sound.play('oops'); ui.setText(g.wrong(state, m), 'oops'); }, 400);
+      const why = g.wrong(state, m);
+      elater(() => { Sound.play('oops'); ui.setText(why, 'oops'); }, 400);
+      /* de uitleg blijft staan (langzame lezers), met de opdracht erachter; niet nog eens voorlezen */
       elater(() => {
         reset();
-        ui.setText(wrongCount >= 2 ? task + ' Lukt het niet? Druk op 💡.' : task);
+        ui.setText(`${why} ${task}${wrongCount >= 2 ? ' Lukt het niet? Druk op 💡.' : ''}`, 'oops', true);
       }, 2600);
     }
   }
@@ -951,7 +972,7 @@ function Exercise(step, ui) {
       const mated = Chess.gameStatus(state) === 'checkmate';
       const r = mated ? null : Plan.refute(state, nLeft - 1, step.win);
       const what = step.win === 'mate' ? 'Zo ontsnapt de koning'
-        : step.win === 'promo' ? 'Zo houdt zwart je pion tegen' : `Nu krijg je de ${PIECE_NAME_NL[step.win] || 'stuk'} niet meer te pakken`;
+        : step.win === 'promo' ? 'Zo houdt zwart je pion tegen' : `Nu krijg je ${PIECE_NAME_NL[step.win] ? Pieces.de(PIECE_NAME_NL[step.win]) : 'het stuk'} niet meer te pakken`;
       ui.setText(r ? 'Oei! Kijk wat zwart dan doet...' : 'Hmm, dat werkt niet.', 'oops');
       let t = 0;
       if (r) {
@@ -1023,13 +1044,33 @@ function makeSetText() {
   const again = () => { const el = $('#tText'); if (el) Sound.say(el.textContent); };
   if ($('#tBubble')) $('#tBubble').onclick = again;
   if ($('#tFace')) $('#tFace').onclick = again;
-  return (t, mood = '') => {
+  return (t, mood = '', silent = false) => {
     const el = $('#tText');
     el.textContent = personal(t);
     el.parentElement.className = 'bubble teacher-bubble ' + mood;
-    Sound.say(el.textContent);
+    fitBubble();
+    if (!silent) Sound.say(el.textContent);
   };
 }
+
+/* De ballon van Pim heeft een vaste hoogte (dan schuiven de knoppen niet).
+   Past een lange tekst er niet in? Dan worden de letters een beetje kleiner. */
+function fitBubble() {
+  const el = $('#tText');
+  if (!el) return;
+  const b = el.parentElement;
+  el.style.fontSize = '';
+  const cs = getComputedStyle(b);
+  const room = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  if (!(room > 0)) return;
+  let fs = parseFloat(getComputedStyle(el).fontSize);
+  for (let n = 0; n < 14 && el.offsetHeight > room + 1; n++) {
+    fs *= 0.94;
+    el.style.fontSize = fs + 'px';
+  }
+}
+window.addEventListener('resize', () => fitBubble());
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitBubble());
 
 function LessonPlayer(li) {
   const lesson = LESSONS[li];
@@ -1175,7 +1216,7 @@ function LessonPlayer(li) {
           b.classList.add('right');
           Sound.play('good');
           confetti(40);
-          setText(pick(PRAISE), 'happy');
+          setText(step.explain ? `${pick(PRAISE)} ${step.explain}` : pick(PRAISE), 'happy');
           // 'Verder' komt altijd op dezelfde plek (onder Pim), ook bij een quiz met bordje
           later(() => nextButton('Verder ▶', true), withBoard ? 700 : 0);
         } else {
@@ -1183,7 +1224,7 @@ function LessonPlayer(li) {
           Sound.play('oops');
           wrong++;
           Stats.lessonWrong(lesson.id);
-          setText(`Nee! Probeer nog eens. ${step.text}`, 'oops');
+          setText(`Bijna! ${o.why || 'Kijk nog eens goed.'} ${o.why ? '' : step.text}`.trim(), 'oops');
         }
       };
     });
@@ -1221,7 +1262,7 @@ function puzzlePool(level = 1) {
       if (st.type !== 'goal') continue;
       if (st.goal === 'plan') {
         const n = (st.line.length + 1) / 2;
-        const what = st.win === 'mate' ? 'Geef schaakmat' : st.win === 'promo' ? 'Breng je pion naar de overkant' : `Pak de ${PIECE_NAME_NL[st.win]}`;
+        const what = st.win === 'mate' ? 'Geef schaakmat' : st.win === 'promo' ? 'Breng je pion naar de overkant' : `Pak ${Pieces.de(PIECE_NAME_NL[st.win])}`;
         fromLessons.push({ ...st, text: `${what}! Je hebt ${n} zetten.`, say: st.say });
       } else if (PUZZLE_TEXT[st.goal]) fromLessons.push({ goal: st.goal, text: PUZZLE_TEXT[st.goal], fen: st.fen });
     }
@@ -1264,9 +1305,17 @@ function Puzzles(level = 1) {
   const pool = puzzlePool(level);
   const lv = PUZZLE_LEVELS.find((l) => l.level === level) || PUZZLE_LEVELS[0];
   const ROUND = 5;
-  const round = shuffle(pool).slice(0, Math.min(ROUND, pool.length));
-  const results = [];
-  let pi = 0;
+  /* Een rondje dat nog niet af is, wordt bewaard: wie even weggaat, gaat later verder waar hij was */
+  const KEY = 'openRound' + level;
+  const saved = Store.data.extra[KEY];
+  const valid = saved && Array.isArray(saved.idx) && saved.idx.length && saved.idx.every((i) => i < pool.length)
+    && Array.isArray(saved.results) && saved.results.length < saved.idx.length;
+  const idx = valid ? saved.idx : shuffle(pool.map((_, i) => i)).slice(0, Math.min(ROUND, pool.length));
+  const round = idx.map((i) => pool[i]);
+  const results = valid ? saved.results.slice() : [];
+  let pi = results.length;
+  const keep = () => { Store.data.extra[KEY] = { idx, results }; Store.save(); };
+  keep();
 
   app.innerHTML = teacherLayout(`Puzzels: ${lv.title}`, '<div class="puzzle-stars" id="pstars"></div>');
   $('#back').onclick = () => go(PuzzleChoose);
@@ -1291,17 +1340,19 @@ function Puzzles(level = 1) {
       onSolved: (first) => {
         results.push(first);
         Store.data.puzzles++;
-        Store.save();
+        keep();
         drawStars();
         awardBadges(800);
         const last = pi + 1 >= round.length;
-        actions.innerHTML = `<button class="btn green huge pulse" id="next">${last ? 'Klaar! ▶' : 'Volgende puzzel ▶'}</button>`;
+        actions.innerHTML = `<button class="btn green huge pulse" id="next">${last ? 'Klaar! ▶' : 'Volgende ▶'}</button>`;
         $('#next').onclick = () => { Sound.play('tap'); pi++; if (last) finish(); else show(); };
       },
     });
   }
 
   function finish() {
+    delete Store.data.extra[KEY];
+    Store.save();
     const stars = results.filter(Boolean).length;
     if (level >= 2) { Store.data.extra['rounds' + level] = (Store.data.extra['rounds' + level] || 0) + 1; Store.save(); awardBadges(1200); }
     Sound.play('win');
@@ -1310,7 +1361,7 @@ function Puzzles(level = 1) {
       <div class="trophy">🧩</div>
       <h2>Rondje klaar!</h2>
       <div class="big-stars">${results.map((r) => (r ? '★' : '✓')).join(' ')}</div>
-      <p>${stars === round.length ? 'Alles in één keer goed. Wauw!' : `${stars} in één keer goed. Knap!`}</p>
+      <p>${stars === round.length ? 'Alles in één keer goed. Wauw!' : stars === 0 ? 'Alle puzzels opgelost. Goed volgehouden!' : `${stars} in één keer goed. Knap!`}</p>
       <p class="small">Je hebt al ${Store.data.puzzles} puzzels opgelost.</p>
       <div class="modal-buttons">
         <button class="btn green" id="mAgain">Nog een rondje</button>
@@ -1396,7 +1447,7 @@ function Prizes() {
     <div class="topbar"><button class="round-btn" id="back" aria-label="Terug">←</button><div class="title">Prijzenkast</div><div class="spacer"></div></div>
     <div class="shelf">
       ${getBadges().map((b) => `
-        <div class="badge ${have.has(b.id) ? 'got' : ''}">
+        <div class="badge ${have.has(b.id) ? 'got' : ''}" data-say="${b.title}. ${have.has(b.id) ? '' : 'Zo verdien je hem: '}${b.desc}">
           ${have.has(b.id) ? badgeIcon(b) : '<div class="badge-emoji mystery">?</div>'}
           <b>${b.title}</b>
           <small>${b.desc}</small>
@@ -1404,6 +1455,8 @@ function Prizes() {
     </div>
   </div>`;
   $('#back').onclick = () => go(Home);
+  // tik op een prijs: Pim leest voor wat het is en hoe je hem verdient
+  app.querySelectorAll('.badge[data-say]').forEach((el) => { el.onclick = () => { Sound.play('tap'); Sound.say(el.dataset.say); }; });
 }
 
 /* =========================================================
@@ -1545,6 +1598,8 @@ function Game(oi, human = null) {
     bubbleTimer = setTimeout(() => el.classList.remove('show'), 5000);
   }
   function oppMood(mood) { $('#oppFace').innerHTML = Avatars.html(opp, mood); }
+  /* oude tekst van de tegenstander weghalen (anders zegt hij iets dat niet meer klopt) */
+  function oppHush() { clearTimeout(bubbleTimer); const el = $('#oppSay'); if (el) el.classList.remove('show'); }
 
   function banner(text, kind = '') {
     const b = $('#banner');
@@ -1586,7 +1641,8 @@ function Game(oi, human = null) {
       const whiteTurn = G.state.turn === 'w';
       t.textContent = whiteTurn ? `${playerName()} is aan de beurt (wit)` : `${opp.name} is aan de beurt (zwart)`;
       t.className = 'turn mine ' + (whiteTurn ? '' : 'black');
-    } else { t.textContent = 'Jij bent aan de beurt!'; t.className = 'turn mine'; }
+    } else if (G.hint && G.hintText) { t.textContent = G.hintText; t.className = 'turn mine'; } // tip staat onder het bord, niet eroverheen
+    else { t.textContent = 'Jij bent aan de beurt!'; t.className = 'turn mine'; }
     $('#meCard').classList.toggle('active', !G.over && G.state.turn === 'w');
     $('#oppCard').classList.toggle('active', !G.over && G.state.turn === 'b');
     $('#undo').disabled = !G.snaps.length || G.busy || (G.over && G.result !== 'loss');
@@ -1616,6 +1672,10 @@ function Game(oi, human = null) {
     }
     if (p && p[0] !== side && G.sel === null) {
       banner(together ? `Nu is ${side === 'w' ? playerName() : opp.name} aan de beurt!` : 'Jij bent wit!');
+    } else if (G.sel !== null) {
+      // daar kan het gekozen stuk niet heen: even schudden, zodat duidelijk is waarom er niks gebeurt
+      view.shake(G.sel);
+      Sound.play('oops');
     }
     G.sel = null; G.dests = [];
     draw();
@@ -1734,6 +1794,7 @@ function Game(oi, human = null) {
     }
 
     let reacted = false;
+    oppHush();
     if (Chess.inCheck(G.state, 'b')) { oppSay(opp.say.gotCheck, 'surprised'); reacted = true; glater(() => Sound.play('check'), 250); }
     else if (m.captured && AI.VAL[m.captured[1]] >= 100) { oppSay(opp.say.lostPiece, 'sad'); reacted = true; }
 
@@ -1770,6 +1831,8 @@ function Game(oi, human = null) {
 
   function opponentMove(m) {
     if (!m) return;
+    // een oude melding (bijv. 'Gerokeerd!') mag de zet van de tegenstander niet verbergen
+    clearTimeout(bannerTimer); $('#banner').className = 'banner';
     apply(m);
     if (m.captured) G.capOpp.push(m.captured);
     G.busy = false;
@@ -1784,6 +1847,7 @@ function Game(oi, human = null) {
     } else if (m.captured) {
       oppSay(opp.say.tookPiece, 'laugh');
     } else {
+      oppHush();
       oppMood('happy');
     }
   }
@@ -1796,6 +1860,7 @@ function Game(oi, human = null) {
     G.history.length = s.hist;
     Object.assign(G, { state: s.state, keys: s.keys, last: s.last, capMe: s.capMe, capOpp: s.capOpp, over: false, result: null, sel: null, dests: [], hint: null, marks: [] });
     closeModal();
+    oppHush();
     oppMood('happy');
     draw();
     banner('Zet terug. Probeer nog eens!');
@@ -1812,9 +1877,10 @@ function Game(oi, human = null) {
       G.hint = { from: h.from, to: h.to };
       G.sel = h.from;
       G.dests = qMoves(Chess.legalMoves(G.state, h.from));
-      draw();
       const name = Pieces.NAMES[h.piece[1]];
-      banner('💡 ' + (h.captured ? `Tip: sla met je ${name}!` : `Tip: zet je ${name} op het gele vakje.`), 'good');
+      G.hintText = '💡 ' + (h.captured ? `Tip: sla met je ${name}!` : `Tip: zet je ${name} op het gele vakje.`);
+      draw();
+      Sound.say(G.hintText.slice(3));
     }, 120);
   }
 

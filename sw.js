@@ -1,7 +1,7 @@
 /* Sammie Schaakt! - offline werken
    Bewaart alle bestanden van de app op het apparaat, zodat hij zonder internet werkt.
    Na een update: verhoog VERSIE, dan haalt de iPad de nieuwe versie op. */
-const VERSIE = 'sammie-v25';
+const VERSIE = 'sammie-v26';
 const FILES = [
   './',
   './index.html',

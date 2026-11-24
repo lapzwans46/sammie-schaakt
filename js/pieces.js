@@ -82,5 +82,7 @@ const Pieces = (() => {
   }
 
   const NAMES = { P: 'pion', N: 'paard', B: 'loper', R: 'toren', Q: 'koningin', K: 'koning' };
-  return { svg, NAMES, THEMES, setTheme };
+  /* lidwoord erbij: 'het paard', maar 'de toren' */
+  const de = (name) => (name === 'paard' ? 'het ' : 'de ') + name;
+  return { svg, NAMES, THEMES, setTheme, de };
 })();

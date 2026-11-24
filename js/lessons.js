@@ -12,7 +12,9 @@
             demoSay: [...] -> wat Pim zegt bij elke zet van het filmpje
             demoWin: 'mate' of 'Q'/'R' -> het filmpje is een vooruit-denk-reeks;
                      de puzzelcontrole kijkt dan of het filmpje klopt
-   quiz     Vraag met knoppen. options: [{ label, piece?, ok: true }]
+   quiz     Vraag met knoppen. options: [{ label, piece?, ok: true, why? }]
+            why: wat Pim zegt als dit (foute) antwoord gekozen wordt
+            explain: wat Pim erbij zegt na het goede antwoord (waarom het klopt)
             Met pieces/fen erbij staat er een bordje naast de vraag.
    stars    Pak alle sterren met je stuk(ken).
             Staan er ook witte pionnen bij een ander stuk? Dan zijn dat obstakels.
@@ -49,7 +51,9 @@ const LESSONS = [
     world: 1, id: 'bord', title: 'Het schaakbord', icon: 'wK',
     steps: [
       { type: 'talk', text: 'Hoi Sam! Ik ben Pim het Paard. Ik leer jou schaken!', pieces: { e4: 'wN' } },
-      { type: 'talk', text: 'Dit is het bord. Het heeft lichte en donkere vakjes.', pieces: {} },
+      { type: 'talk', text: 'Dit is het bord. Het heeft 64 vakjes: lichte en donkere.', pieces: {} },
+      { type: 'talk', text: 'Elk vakje heeft een naam. Eerst de letter onderaan, dan het cijfer opzij. Ik sta op e4!', pieces: { e4: 'wN' }, mark: ['e4'] },
+      { type: 'quiz', text: 'Hoe heet het vakje waar ik nu sta?', pieces: { c3: 'wN' }, options: [{ label: 'c3', ok: true }, { label: 'e4' }, { label: 'a1' }] },
       { type: 'talk', text: 'Jij bent wit. Jouw stukken staan onderaan.', fen: LESSON_START },
       { type: 'talk', text: 'Je zet om de beurt. Wit begint altijd!', fen: LESSON_START },
       { type: 'quiz', text: 'Wie begint er?', options: [{ label: 'Wit', piece: 'wP', ok: true }, { label: 'Zwart', piece: 'bP' }] },
@@ -168,10 +172,11 @@ const LESSONS = [
     steps: [
       { type: 'talk', text: 'Kijk goed! De toren geeft schaak.', fen: '6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1', demo: ['d1-d8'], markAfter: ['g8'] },
       { type: 'talk', text: 'Kan de koning weg? Nee! Zijn eigen pionnen staan in de weg.', fen: '3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1', mark: ['f7', 'g7', 'h7'] },
-      { type: 'talk', text: 'Schaak, en de koning kan niet ontsnappen? Dat heet SCHAAKMAT!', fen: '3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1', mark: ['g8'] },
+      { type: 'talk', text: 'Kan er iets tussen? Kan iets de toren slaan? Ook niet!', fen: '3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1', mark: ['d8'] },
+      { type: 'talk', text: 'Schaak, en er is geen redding? Dat heet SCHAAKMAT!', fen: '3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1', mark: ['g8'] },
       { type: 'talk', text: 'Schaakmat is het einde van het spel. Jij hebt gewonnen!', fen: '3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1' },
-      { type: 'quiz', text: 'Is dit schaakmat? Kijk naar het vakje h7.', fen: '3R2k1/5pp1/8/8/8/8/8/6K1 b - - 0 1', options: [{ label: 'Ja' }, { label: 'Nee', ok: true }] },
-      { type: 'quiz', text: 'En dit? Is dit schaakmat?', fen: 'k7/1Q6/1K6/8/8/8/8/8 b - - 0 1', options: [{ label: 'Ja', ok: true }, { label: 'Nee' }] },
+      { type: 'quiz', text: 'Is dit schaakmat? Kijk naar het vakje h7.', fen: '3R2k1/5pp1/8/8/8/8/8/6K1 b - - 0 1', options: [{ label: 'Ja', why: 'Kijk naar h7. Kan de koning daarheen?' }, { label: 'Nee', ok: true }], explain: 'De koning kan naar h7. Hij is gered!' },
+      { type: 'quiz', text: 'En dit? Is dit schaakmat?', fen: 'k7/1Q6/1K6/8/8/8/8/8 b - - 0 1', options: [{ label: 'Ja', ok: true }, { label: 'Nee', why: 'Kan de koning ergens heen? Kan hij de koningin slaan?' }], explain: 'De koning kan nergens heen. En de koningin slaan mag niet: dan staat hij naast de witte koning.' },
       { type: 'goal', goal: 'mate', text: 'Geef schaakmat met je toren!', fen: '6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1' },
       { type: 'goal', goal: 'mate', text: 'Geef schaakmat met je koningin!', fen: 'k7/8/1K6/8/8/8/7Q/8 w - - 0 1' },
       { type: 'goal', goal: 'mate', text: 'Twee torens helpen elkaar. Geef schaakmat!', fen: 'k7/8/8/8/8/8/1R6/6RK w - - 0 1' },
@@ -193,13 +198,16 @@ const LESSONS = [
       { type: 'talk', text: 'Let op! Rokeren mag niet altijd. Er mag niks tussen staan.', fen: '4k3/8/8/8/8/8/5PPP/4KB1R w K - 0 1', mark: ['f1'] },
       { type: 'talk', text: 'De koning en de toren mogen nog niet gezet hebben.', fen: '4k3/8/8/8/8/8/5PPP/4K2R w K - 0 1', mark: ['e1', 'h1'] },
       { type: 'talk', text: 'En je koning mag niet schaak staan.', fen: '4r1k1/8/8/8/8/8/5PPP/4K2R w K - 0 1', mark: ['e8'] },
-      { type: 'quiz', text: 'Mag wit hier rokeren?', fen: '4k3/8/8/8/8/8/5PPP/4KB1R w K - 0 1', options: [{ label: 'Ja' }, { label: 'Nee', ok: true }] },
+      { type: 'talk', text: 'De koning mag ook niet over een vakje lopen waar zwart hem kan pakken. Hier past de toren op f1.', fen: '4kr2/8/8/8/8/8/6PP/4K2R w K - 0 1', mark: ['f1', 'f8'] },
+      { type: 'quiz', text: 'Mag wit hier rokeren?', fen: '4k3/8/8/8/8/8/5PPP/4KB1R w K - 0 1', options: [{ label: 'Ja', why: 'Kijk naar f1. Is daar plek?' }, { label: 'Nee', ok: true }], explain: 'De loper staat ertussen.' },
     ],
   },
   {
     world: 2, id: 'tips', title: 'Klaar voor een potje!', icon: 'bQ',
     steps: [
-      { type: 'talk', text: 'Je kent nu de regels! Hier zijn drie tips.', fen: LESSON_START },
+      { type: 'talk', text: 'Nog een regel: je koning mag nooit zelf schaak gaan staan. Hier past de zwarte toren op.', fen: '3rk3/8/8/8/8/8/8/4K3 w - - 0 1', mark: ['d1', 'd2'] },
+      { type: 'talk', text: 'Zwart is aan de beurt. Hij staat niet schaak, maar kan niks meer zetten. Dat heet PAT. Dan wint niemand!', fen: 'k7/8/1Q6/8/8/8/8/K7 b - - 0 1', mark: ['a8'] },
+      { type: 'talk', text: 'Je kent nu de belangrijkste regels! Hier zijn drie tips.', fen: LESSON_START },
       { type: 'talk', text: 'Tip 1: Zet je stukken in het midden.', fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3', mark: ['d4', 'e4', 'd5', 'e5'] },
       { type: 'talk', text: 'Tip 2: Kijk goed. Kan zwart mijn stuk pakken?', fen: 'rnbqkbnr/ppp1pppp/8/3p4/4Q3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 3', mark: ['e4'] },
       { type: 'talk', text: 'Tip 3: Pas goed op je koning!', fen: 'rnbqkbnr/pppp1ppp/8/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 3 3', mark: ['f7'] },

@@ -4,6 +4,8 @@
    en er mag niets buiten het scherm vallen (schuiven). */
 Sound.play = () => {}; Sound.say = () => {}; window.confetti = () => {}; // stil testen: geen geluidjes en geen stem
 try { localStorage.clear(); } catch (e) { /* ok */ }
+// animaties uit: het dobberen van Pim en het pulseren van knoppen zijn geen echte verschuivingen
+{ const st = document.createElement('style'); st.textContent = '*,*::before,*::after{animation:none!important;transition:none!important}'; document.head.appendChild(st); }
 const Orig = BoardView;
 BoardView = class extends Orig { constructor(c, o) { super(c, o); window.__bv = this; } render(b, o) { this.__opts = o || {}; return super.render(b, o); } };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -11,7 +13,7 @@ const li = (id) => LESSONS.findIndex((l) => l.id === id);
 const step = (id, si) => { LESSONS.push({ world: 99, id: 'x', title: 'Test', steps: [LESSONS[li(id)].steps[si]] }); go(LessonPlayer, LESSONS.length - 1); LESSONS.pop(); };
 const answerQuiz = async () => { const b = [...document.querySelectorAll('.quiz-btn')].find((x) => x.dataset.i == window.__ok); if (b) b.click(); await wait(1200); };
 const solve = async () => {
-  for (let k = 0; k < 6 && !document.querySelector('#next'); k++) {
+  for (let k = 0; k < 14 && !document.querySelector('#next'); k++) { // hint in 2 stapjes: eerst het stuk, dan het vakje
     document.getElementById('hintBtn').click(); await wait(30);
     const h = __bv.__opts.hint; if (!h) { await wait(800); continue; }
     __bv.onTap(h.from); await wait(30); __bv.onTap(h.to); await wait(30);
@@ -23,7 +25,7 @@ const quizStep = (id, si) => () => { window.__ok = LESSONS[li(id)].steps[si].opt
 const SC = [
   ['les praten+bord', () => step('toren', 1)],
   ['les filmpje lange tekst', () => step('aftrek', 1)],
-  ['les quiz+bord', quizStep('mat', 4)],
+  ['les quiz+bord', quizStep('mat', 5)],
   ['  ...na goed antwoord', null, answerQuiz],
   ['les quiz lange knoppen', quizStep('mat2', 3)],
   ['les opdracht 1 zet', () => step('schaak', 6)],
